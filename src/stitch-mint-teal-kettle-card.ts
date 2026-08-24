@@ -24,6 +24,8 @@ type KettleConfig = {
   modes?: KettleMode[];
   keep_warm_entity?: string;
   keep_warm_name?: string;
+  power_on_mode?: string;
+  power_off_mode?: string;
 };
 
 type EditorConfig = Partial<KettleConfig> & { entity?: string };
@@ -230,6 +232,8 @@ class StitchMintTealKettleCard extends HTMLElement {
       show_modes: config.show_modes ?? DEFAULTS.show_modes,
       keep_warm_name: config.keep_warm_name ?? DEFAULTS.keep_warm_name,
       modes: normalizeModes(config.modes),
+      power_on_mode: config.power_on_mode ?? 'on',
+      power_off_mode: config.power_off_mode ?? 'off',
     };
     this.render();
   }
@@ -269,7 +273,10 @@ class StitchMintTealKettleCard extends HTMLElement {
     } else if (action === 'mode' && button.dataset.value) {
       void this.call('set_operation_mode', { operation_mode: button.dataset.value });
     } else if (action === 'power') {
-      void this.call(this.currentState() === 'off' ? 'turn_on' : 'turn_off');
+      const operationMode = this.currentState() === 'off'
+        ? this.config.power_on_mode ?? 'on'
+        : this.config.power_off_mode ?? 'off';
+      void this.call('set_operation_mode', { operation_mode: operationMode });
     }
   }
 
@@ -384,7 +391,7 @@ class StitchMintTealKettleCardEditor extends HTMLElement {
   private render(): void {
     const modes = normalizeModes(this.config.modes);
     const modeRows = modes.map((mode, index) => `<div class="mode-row"><label>Название<input data-mode-index="${index}" data-mode-key="label" value="${escapeHtml(mode.label)}"></label><label>Значение<input data-mode-index="${index}" data-mode-key="value" value="${escapeHtml(mode.value)}"></label><label>Иконка<input data-mode-index="${index}" data-mode-key="icon" value="${escapeHtml(mode.icon ?? 'mdi:tea')}"></label><button class="secondary" type="button" data-editor-action="delete-mode-${index}" aria-label="Удалить режим">Удалить</button></div>`).join('');
-    this.root.innerHTML = `<style>${EDITOR_STYLE}</style><div class="form"><label>Entity чайника *<input data-key="entity" placeholder="water_heater.kettle" value="${escapeHtml(this.config.entity ?? '')}"></label><span class="help">Укажите точный entity_id из Settings → Devices & services → Entities.</span><label>Название<input data-key="name" value="${escapeHtml(this.config.name ?? DEFAULTS.name)}"></label><label>Расположение<input data-key="location" value="${escapeHtml(this.config.location ?? DEFAULTS.location)}"></label><label>Иконка<input data-key="icon" value="${escapeHtml(this.config.icon ?? DEFAULTS.icon)}"></label><label class="checkbox"><input data-key="show_modes" type="checkbox" ${this.config.show_modes !== false ? 'checked' : ''}>Показывать режимы чая</label><label>Entity поддержания тепла<input data-key="keep_warm_entity" placeholder="switch.kettle_keep_warm" value="${escapeHtml(this.config.keep_warm_entity ?? '')}"></label><label>Название поддержания тепла<input data-key="keep_warm_name" value="${escapeHtml(this.config.keep_warm_name ?? DEFAULTS.keep_warm_name)}"></label><fieldset><legend>Режимы чая</legend>${modeRows || '<span class="help">Режимы отключены или не заданы.</span>'}<button type="button" data-editor-action="add-mode">Добавить режим</button></fieldset></div>`;
+    this.root.innerHTML = `<style>${EDITOR_STYLE}</style><div class="form"><label>Entity чайника *<input data-key="entity" placeholder="water_heater.kettle" value="${escapeHtml(this.config.entity ?? '')}"></label><span class="help">Укажите точный entity_id из Settings → Devices & services → Entities.</span><label>Название<input data-key="name" value="${escapeHtml(this.config.name ?? DEFAULTS.name)}"></label><label>Расположение<input data-key="location" value="${escapeHtml(this.config.location ?? DEFAULTS.location)}"></label><label>Иконка<input data-key="icon" value="${escapeHtml(this.config.icon ?? DEFAULTS.icon)}"></label><label class="checkbox"><input data-key="show_modes" type="checkbox" ${this.config.show_modes !== false ? 'checked' : ''}>Показывать режимы чая</label><label>Режим включения<input data-key="power_on_mode" value="${escapeHtml(this.config.power_on_mode ?? 'on')}"></label><label>Режим выключения<input data-key="power_off_mode" value="${escapeHtml(this.config.power_off_mode ?? 'off')}"></label><span class="help">Значения должны входить в attributes.operation_list у water_heater entity.</span><label>Entity поддержания тепла<input data-key="keep_warm_entity" placeholder="switch.kettle_keep_warm" value="${escapeHtml(this.config.keep_warm_entity ?? '')}"></label><label>Название поддержания тепла<input data-key="keep_warm_name" value="${escapeHtml(this.config.keep_warm_name ?? DEFAULTS.keep_warm_name)}"></label><fieldset><legend>Режимы чая</legend>${modeRows || '<span class="help">Режимы отключены или не заданы.</span>'}<button type="button" data-editor-action="add-mode">Добавить режим</button></fieldset></div>`;
     this.root.querySelectorAll<HTMLInputElement>('[data-mode-index]').forEach((input) => input.addEventListener('change', (event) => this.handleModeChange(event)));
   }
 

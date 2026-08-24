@@ -39,6 +39,8 @@ icon: mdi:kettle-steam
 show_modes: true
 keep_warm_entity: switch.REPLACE_WITH_KEEP_WARM_ENTITY
 keep_warm_name: Поддержание тепла
+power_on_mode: "on"
+power_off_mode: "off"
 modes:
   - label: Белый чай
     value: white_tea
@@ -73,6 +75,8 @@ modes:
 После добавления карточки через UI доступны `entity`, название, расположение, MDI-иконка, видимость режимов, entity поддержания тепла и редактирование списка чайных режимов.
 
 Значения `modes[].value` должны совпадать с фактическими значениями `operation_list` основной `water_heater` entity. Русские подписи меняют только отображение.
+
+Кнопка «Вкл/Выкл» использует `water_heater.set_operation_mode`, а не `water_heater.turn_on`. Если в `operation_list` устройства значения отличаются, замените `power_on_mode` и `power_off_mode` на фактические значения.
 
 ## Сборка
 
