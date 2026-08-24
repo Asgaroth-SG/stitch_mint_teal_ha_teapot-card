@@ -33,6 +33,29 @@ const DEFAULTS: Required<Pick<KettleConfig, 'name' | 'location' | 'icon' | 'show
 
 const TEMPERATURE_STEP = 5;
 
+// Словарь для перевода режимов на русский язык
+const MODE_TRANSLATIONS: Record<string, string> = {
+  'boil': 'Кипячение',
+  'warm': 'Поддержание',
+  'white tea': 'Белый чай',
+  'green tea': 'Зеленый чай',
+  'red tea': 'Красный чай',
+  'herbal tea': 'Травяной чай',
+  'flower tea': 'Цветочный',
+  'flower': 'Цветочный',
+  'pu-erh': 'Пуэр',
+  'puerh': 'Пуэр',
+  'oolong': 'Улун',
+  'black tea': 'Черный чай',
+  'coffee': 'Кофе',
+  'milk': 'Детское питание'
+};
+
+function translateMode(mode: string): string {
+  const lower = String(mode).toLowerCase().trim();
+  return MODE_TRANSLATIONS[lower] || mode; // Если перевода нет, вернет оригинальное название
+}
+
 const STYLE = `
 :host {
   display: block;
@@ -130,7 +153,7 @@ input[type="range"]::-moz-range-thumb { width: 24px; height: 24px; border: 0; bo
 .modes-toggle ha-icon { transition: transform 0.3s ease; }
 .modes-toggle.open ha-icon { transform: rotate(180deg); }
 .modes-content { overflow: hidden; max-height: 0; transition: max-height 0.3s ease-in-out; }
-.modes-content.open { max-height: 500px; /* arbitrary large value for transition */ }
+.modes-content.open { max-height: 500px; }
 .modes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding-top: 8px; }
 .mode-btn {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
@@ -341,12 +364,13 @@ class StitchMintTealKettleCard extends HTMLElement {
     return Math.max(min, Math.min(max, snapped));
   }
 
-  // Простой маппер для иконок режимов
   private getModeIcon(mode: string): string {
     const m = mode.toLowerCase();
-    if (m.includes('power') || m.includes('off')) return 'mdi:power';
     if (m.includes('flower') || m.includes('цветоч')) return 'mdi:flower';
-    if (m.includes('herb') || m.includes('травян')) return 'mdi:leaf';
+    if (m.includes('herb') || m.includes('травян') || m.includes('leaf')) return 'mdi:leaf';
+    if (m.includes('coffee') || m.includes('кофе')) return 'mdi:coffee';
+    if (m.includes('milk') || m.includes('детск')) return 'mdi:baby-bottle-outline';
+    if (m.includes('boil') || m.includes('кипяч')) return 'mdi:pot-steam';
     return 'mdi:cup-water';
   }
 
@@ -370,12 +394,18 @@ class StitchMintTealKettleCard extends HTMLElement {
     const warmState = this.config.keep_warm_entity ? this._hass?.states[this.config.keep_warm_entity]?.state : undefined;
     const active = state.state !== 'off' && state.state !== 'unavailable';
     const progress = this.sliderProgress(sliderValue, min, max);
+    
     const operationList = Array.isArray(attributes.operation_list) ? attributes.operation_list : [];
     const currentMode = String(attributes.operation_mode || '');
 
-    // Блок режимов (Accordion + Grid)
+    // Фильтруем режимы "on" и "off"
+    const filteredModes = operationList.filter(mode => {
+      const m = String(mode).toLowerCase();
+      return m !== 'on' && m !== 'off';
+    });
+
     let modesMarkup = '';
-    if (this.config.show_modes !== false && operationList.length > 0) {
+    if (this.config.show_modes !== false && filteredModes.length > 0) {
       modesMarkup = `
         <div class="divider" aria-hidden="true"></div>
         <section class="modes-section">
@@ -385,13 +415,14 @@ class StitchMintTealKettleCard extends HTMLElement {
           </button>
           <div class="modes-content ${this._modesExpanded ? 'open' : ''}">
             <div class="modes-grid">
-              ${operationList.map(mode => {
+              ${filteredModes.map(mode => {
                 const modeStr = String(mode);
+                const translatedMode = translateMode(modeStr);
                 const isActive = currentMode === modeStr;
                 return `
                   <button class="mode-btn ${isActive ? 'active' : ''}" data-action="set-mode" data-mode="${escapeHtml(modeStr)}">
-                    <ha-icon icon="${this.getModeIcon(modeStr)}"></ha-icon>
-                    <span>${escapeHtml(modeStr)}</span>
+                    <ha-icon icon="${this.getModeIcon(translatedMode)}"></ha-icon>
+                    <span>${escapeHtml(translatedMode)}</span>
                   </button>
                 `;
               }).join('')}

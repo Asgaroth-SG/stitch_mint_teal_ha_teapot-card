@@ -1,13 +1,33 @@
-var L = Object.defineProperty;
-var N = (r, i, e) => i in r ? L(r, i, { enumerable: !0, configurable: !0, writable: !0, value: e }) : r[i] = e;
-var s = (r, i, e) => N(r, typeof i != "symbol" ? i + "" : i, e);
+var z = Object.defineProperty;
+var F = (r, i, e) => i in r ? z(r, i, { enumerable: !0, configurable: !0, writable: !0, value: e }) : r[i] = e;
+var s = (r, i, e) => F(r, typeof i != "symbol" ? i + "" : i, e);
 const c = {
   name: "Чайник",
   location: "Кухня",
   icon: "mdi:kettle",
   show_modes: !0,
   keep_warm_name: "Поддержание тепла"
-}, g = 5, f = `
+}, f = 5, I = {
+  boil: "Кипячение",
+  warm: "Поддержание",
+  "white tea": "Белый чай",
+  "green tea": "Зеленый чай",
+  "red tea": "Красный чай",
+  "herbal tea": "Травяной чай",
+  "flower tea": "Цветочный",
+  flower: "Цветочный",
+  "pu-erh": "Пуэр",
+  puerh: "Пуэр",
+  oolong: "Улун",
+  "black tea": "Черный чай",
+  coffee: "Кофе",
+  milk: "Детское питание"
+};
+function A(r) {
+  const i = String(r).toLowerCase().trim();
+  return I[i] || r;
+}
+const b = `
 :host {
   display: block;
   /* Mint Teal System Colors */
@@ -104,7 +124,7 @@ input[type="range"]::-moz-range-thumb { width: 24px; height: 24px; border: 0; bo
 .modes-toggle ha-icon { transition: transform 0.3s ease; }
 .modes-toggle.open ha-icon { transform: rotate(180deg); }
 .modes-content { overflow: hidden; max-height: 0; transition: max-height 0.3s ease-in-out; }
-.modes-content.open { max-height: 500px; /* arbitrary large value for transition */ }
+.modes-content.open { max-height: 500px; }
 .modes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding-top: 8px; }
 .mode-btn {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
@@ -146,7 +166,7 @@ input[type="range"]::-moz-range-thumb { width: 24px; height: 24px; border: 0; bo
 
 button:focus-visible, input:focus-visible { outline: 2px solid var(--mt-primary); outline-offset: 2px; }
 .error { padding: 12px; border-radius: 10px; color: #ba1a1a; background: #ffdad6; font-size: 13px; }
-`, z = `
+`, H = `
 :host { display: block; font-family: var(--paper-font-body1_-_font-family, sans-serif); color: var(--primary-text-color, #0f1e1c); }
 * { box-sizing: border-box; }
 .form { display: grid; gap: 14px; padding: 4px 0; }
@@ -160,21 +180,21 @@ input:focus, select:focus { outline: 2px solid var(--primary-color, #00685d); ou
 function o(r) {
   return String(r ?? "").replace(/[&<>'"]/g, (i) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[i] ?? i);
 }
-function _(r, i) {
+function $(r, i) {
   const e = typeof r == "string" ? r.trim() : "";
   return /^(mdi|hass):[a-z0-9-]+$/i.test(e) ? e : i;
 }
-function $(r, i) {
+function E(r, i) {
   const e = typeof r == "number" ? r : Number(r);
   return Number.isFinite(e) ? e : i;
 }
-function p(r) {
+function m(r) {
   return r === null ? "—" : `${Math.round(r)}°C`;
 }
-function F(r, i) {
+function j(r, i) {
   r.dispatchEvent(new CustomEvent("config-changed", { bubbles: !0, composed: !0, detail: { config: i } }));
 }
-class I extends HTMLElement {
+class W extends HTMLElement {
   constructor() {
     super();
     s(this, "config", null);
@@ -206,7 +226,7 @@ class I extends HTMLElement {
       entity: e.entity.trim(),
       name: e.name ?? c.name,
       location: e.location ?? c.location,
-      icon: _(e.icon, c.icon),
+      icon: $(e.icon, c.icon),
       show_modes: e.show_modes ?? c.show_modes,
       keep_warm_name: e.keep_warm_name ?? c.keep_warm_name,
       power_on_mode: e.power_on_mode ?? "on",
@@ -229,7 +249,7 @@ class I extends HTMLElement {
     if (!Number.isFinite(a)) return;
     t.style.setProperty("--progress", `${this.sliderProgress(a, Number(t.min), Number(t.max))}%`);
     const n = this.root.querySelector('[data-role="target-value"]');
-    n && (n.textContent = p(a));
+    n && (n.textContent = m(a));
   }
   handleChange(e) {
     const t = e.target;
@@ -272,28 +292,30 @@ class I extends HTMLElement {
   }
   snapToStep(e, t, a) {
     if (!Number.isFinite(e) || !Number.isFinite(t) || !Number.isFinite(a) || a <= t) return a;
-    const n = t + Math.round((e - t) / g) * g;
+    const n = t + Math.round((e - t) / f) * f;
     return Math.max(t, Math.min(a, n));
   }
-  // Простой маппер для иконок режимов
   getModeIcon(e) {
     const t = e.toLowerCase();
-    return t.includes("power") || t.includes("off") ? "mdi:power" : t.includes("flower") || t.includes("цветоч") ? "mdi:flower" : t.includes("herb") || t.includes("травян") ? "mdi:leaf" : "mdi:cup-water";
+    return t.includes("flower") || t.includes("цветоч") ? "mdi:flower" : t.includes("herb") || t.includes("травян") || t.includes("leaf") ? "mdi:leaf" : t.includes("coffee") || t.includes("кофе") ? "mdi:coffee" : t.includes("milk") || t.includes("детск") ? "mdi:baby-bottle-outline" : t.includes("boil") || t.includes("кипяч") ? "mdi:pot-steam" : "mdi:cup-water";
   }
   render() {
-    var w, y, k;
+    var y, k, _;
     if (!this.config) {
-      this.root.innerHTML = `<style>${f}</style><div class="card"><div class="error">Настройте entity чайника.</div></div>`;
+      this.root.innerHTML = `<style>${b}</style><div class="card"><div class="error">Настройте entity чайника.</div></div>`;
       return;
     }
-    const e = (w = this._hass) == null ? void 0 : w.states[this.config.entity];
+    const e = (y = this._hass) == null ? void 0 : y.states[this.config.entity];
     if (!e) {
-      this.root.innerHTML = `<style>${f}</style><div class="card"><div class="error">Entity <code>${o(this.config.entity)}</code> не найдена.</div></div>`;
+      this.root.innerHTML = `<style>${b}</style><div class="card"><div class="error">Entity <code>${o(this.config.entity)}</code> не найдена.</div></div>`;
       return;
     }
-    const t = e.attributes ?? {}, a = Number.isFinite(Number(t.current_temperature)) ? Number(t.current_temperature) : null, n = Number.isFinite(Number(t.temperature)) ? Number(t.temperature) : null, d = $(t.min_temp, 30), l = $(t.max_temp, 100), b = this.snapToStep(n ?? l, d, l), C = this.config.keep_warm_entity ? (k = (y = this._hass) == null ? void 0 : y.states[this.config.keep_warm_entity]) == null ? void 0 : k.state : void 0, h = e.state !== "off" && e.state !== "unavailable", E = this.sliderProgress(b, d, l), x = Array.isArray(t.operation_list) ? t.operation_list : [], S = String(t.operation_mode || "");
-    let v = "";
-    this.config.show_modes !== !1 && x.length > 0 && (v = `
+    const t = e.attributes ?? {}, a = Number.isFinite(Number(t.current_temperature)) ? Number(t.current_temperature) : null, n = Number.isFinite(Number(t.temperature)) ? Number(t.temperature) : null, d = E(t.min_temp, 30), p = E(t.max_temp, 100), x = this.snapToStep(n ?? p, d, p), S = this.config.keep_warm_entity ? (_ = (k = this._hass) == null ? void 0 : k.states[this.config.keep_warm_entity]) == null ? void 0 : _.state : void 0, h = e.state !== "off" && e.state !== "unavailable", M = this.sliderProgress(x, d, p), L = Array.isArray(t.operation_list) ? t.operation_list : [], T = String(t.operation_mode || ""), v = L.filter((g) => {
+      const l = String(g).toLowerCase();
+      return l !== "on" && l !== "off";
+    });
+    let w = "";
+    this.config.show_modes !== !1 && v.length > 0 && (w = `
         <div class="divider" aria-hidden="true"></div>
         <section class="modes-section">
           <button class="modes-toggle ${this._modesExpanded ? "open" : ""}" data-action="toggle-accordion" aria-expanded="${this._modesExpanded}">
@@ -302,12 +324,12 @@ class I extends HTMLElement {
           </button>
           <div class="modes-content ${this._modesExpanded ? "open" : ""}">
             <div class="modes-grid">
-              ${x.map((T) => {
-      const m = String(T);
+              ${v.map((g) => {
+      const l = String(g), C = A(l);
       return `
-                  <button class="mode-btn ${S === m ? "active" : ""}" data-action="set-mode" data-mode="${o(m)}">
-                    <ha-icon icon="${this.getModeIcon(m)}"></ha-icon>
-                    <span>${o(m)}</span>
+                  <button class="mode-btn ${T === l ? "active" : ""}" data-action="set-mode" data-mode="${o(l)}">
+                    <ha-icon icon="${this.getModeIcon(C)}"></ha-icon>
+                    <span>${o(C)}</span>
                   </button>
                 `;
     }).join("")}
@@ -315,9 +337,9 @@ class I extends HTMLElement {
           </div>
         </section>
       `);
-    const M = this.config.keep_warm_entity ? `
+    const N = this.config.keep_warm_entity ? `
       <div class="divider" aria-hidden="true"></div>
-      <button class="warm-row ${C === "on" ? "on" : ""}" data-action="toggle-warm">
+      <button class="warm-row ${S === "on" ? "on" : ""}" data-action="toggle-warm">
         <div class="warm-content">
           <div class="warm-icon-box"><ha-icon icon="mdi:snowflake-thermometer"></ha-icon></div>
           <span class="warm-label">${o(this.config.keep_warm_name)}</span>
@@ -326,11 +348,11 @@ class I extends HTMLElement {
       </button>
     ` : "";
     this.root.innerHTML = `
-      <style>${f}</style>
+      <style>${b}</style>
       <article class="card">
         <header class="header">
           <div class="icon-bubble">
-            <ha-icon icon="${_(this.config.icon, c.icon)}"></ha-icon>
+            <ha-icon icon="${$(this.config.icon, c.icon)}"></ha-icon>
           </div>
           <div class="info">
             <h2>${o(this.config.name)}</h2>
@@ -344,32 +366,32 @@ class I extends HTMLElement {
         <section class="temperatures">
           <div class="temperature">
             <span class="temp-label">Текущая температура</span>
-            <span class="temp-current">${p(a)}</span>
+            <span class="temp-current">${m(a)}</span>
           </div>
           <div class="temp-divider" aria-hidden="true"></div>
           <div class="temperature target">
             <span class="temp-label">Целевая температура</span>
-            <span class="temp-target" data-role="target-value">${p(n)}</span>
+            <span class="temp-target" data-role="target-value">${m(n)}</span>
           </div>
         </section>
 
         <section class="slider-section">
           <div class="slider-labels">
-            <span>${p(d)}</span>
-            <span>${p(l)}</span>
+            <span>${m(d)}</span>
+            <span>${m(p)}</span>
           </div>
           <input aria-label="Целевая температура" data-action="temperature" type="range" 
-                 min="${d}" max="${l}" step="${g}" value="${b}" 
-                 style="--progress: ${E}%">
+                 min="${d}" max="${p}" step="${f}" value="${x}" 
+                 style="--progress: ${M}%">
         </section>
 
-        ${v}
-        ${M}
+        ${w}
+        ${N}
       </article>
     `;
   }
 }
-class H extends HTMLElement {
+class P extends HTMLElement {
   constructor() {
     super();
     s(this, "config", {});
@@ -389,7 +411,7 @@ class H extends HTMLElement {
   set hass(e) {
   }
   emit(e) {
-    this.config = { ...this.config, ...e }, F(this, this.config);
+    this.config = { ...this.config, ...e }, j(this, this.config);
   }
   handleChange(e) {
     const t = e.target, a = t.dataset.key;
@@ -397,7 +419,7 @@ class H extends HTMLElement {
   }
   render() {
     this.root.innerHTML = `
-      <style>${z}</style>
+      <style>${H}</style>
       <div class="form">
         <label>Entity чайника *<input data-key="entity" placeholder="water_heater.kettle" value="${o(this.config.entity ?? "")}"></label>
         <label>Название<input data-key="name" value="${o(this.config.name ?? c.name)}"></label>
@@ -413,8 +435,8 @@ class H extends HTMLElement {
     `;
   }
 }
-customElements.get("stitch-mint-teal-kettle-card") || customElements.define("stitch-mint-teal-kettle-card", I);
-customElements.get("stitch-mint-teal-kettle-card-editor") || customElements.define("stitch-mint-teal-kettle-card-editor", H);
+customElements.get("stitch-mint-teal-kettle-card") || customElements.define("stitch-mint-teal-kettle-card", W);
+customElements.get("stitch-mint-teal-kettle-card-editor") || customElements.define("stitch-mint-teal-kettle-card-editor", P);
 const u = window;
 u.customCards = u.customCards ?? [];
 u.customCards.some((r) => r.type === "custom:stitch-mint-teal-kettle-card") || u.customCards.push({
