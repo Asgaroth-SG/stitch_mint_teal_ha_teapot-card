@@ -28,7 +28,7 @@ function A(r) {
 const b = `
 :host {
   display: block;
-  /* Mint Teal System Colors */
+  /* Mint Teal System Colors Default */
   --mt-surface: #ecfdf9;
   --mt-surface-dim: #ccdeda;
   --mt-surface-container: #e0f2ee;
@@ -42,6 +42,8 @@ const b = `
   --mt-primary: #00685d;
   --mt-on-primary: #ffffff;
   --mt-tertiary: #4f5f5f;
+  --mt-border: rgba(0, 137, 123, 0.15);
+  --mt-shadow: 0px 2px 8px rgba(0, 137, 123, 0.08);
   
   font-family: "Work Sans", system-ui, sans-serif;
   color: var(--mt-on-surface);
@@ -54,12 +56,13 @@ const b = `
   padding: 16px;
   background: var(--mt-surface);
   border-radius: 16px;
-  border: 1px solid rgba(0, 137, 123, 0.15);
-  box-shadow: 0px 2px 8px rgba(0, 137, 123, 0.08);
+  border: 1px solid var(--mt-border);
+  box-shadow: var(--mt-shadow);
   display: flex;
   flex-direction: column;
   gap: 24px;
   transition: box-shadow 0.3s ease;
+  backdrop-filter: blur(8px);
 }
 .card:hover {
   box-shadow: 0px 8px 16px rgba(0, 137, 123, 0.12);
@@ -108,7 +111,7 @@ input[type="range"]::-moz-range-track { height: 8px; border-radius: 4px; backgro
 input[type="range"]::-moz-range-progress { height: 8px; border-radius: 4px; background: var(--mt-primary); }
 input[type="range"]::-moz-range-thumb { width: 24px; height: 24px; border: 0; border-radius: 50%; background: var(--mt-primary); box-shadow: 0 2px 4px rgb(0 0 0 / 20%); }
 
-.divider { width: 100%; height: 1px; background: rgba(0, 137, 123, 0.15); }
+.divider { width: 100%; height: 1px; background: var(--mt-border); }
 
 /* Modes Accordion */
 .modes-section { display: flex; flex-direction: column; }
@@ -228,7 +231,8 @@ class W extends HTMLElement {
       show_modes: e.show_modes ?? c.show_modes,
       keep_warm_name: e.keep_warm_name ?? c.keep_warm_name,
       power_on_mode: e.power_on_mode ?? "on",
-      power_off_mode: e.power_off_mode ?? "off"
+      power_off_mode: e.power_off_mode ?? "off",
+      theme: e.theme || {}
     }, this.render();
   }
   set hass(e) {
@@ -308,6 +312,18 @@ class W extends HTMLElement {
       this.root.innerHTML = `<style>${b}</style><div class="card"><div class="error">Entity <code>${o(this.config.entity)}</code> не найдена.</div></div>`;
       return;
     }
+
+    const D = this.config.theme || {};
+    let th = "";
+    D.background && (th += `--mt-surface: ${o(D.background)}; `);
+    D.surface && (th += `--mt-surface-container: ${o(D.surface)}; --mt-surface-variant: ${o(D.surface)}; --mt-surface-dim: ${o(D.surface)}; --mt-surface-container-high: ${o(D.surface)}; `);
+    D.primary && (th += `--mt-primary: ${o(D.primary)}; `);
+    D.text && (th += `--mt-on-surface: ${o(D.text)}; `);
+    D.secondary && (th += `--mt-on-surface-variant: ${o(D.secondary)}; --mt-outline: ${o(D.secondary)}; --mt-tertiary: ${o(D.secondary)}; `);
+    D.on_primary && (th += `--mt-on-primary: ${o(D.on_primary)}; `);
+    D.border && (th += `--mt-border: ${o(D.border)}; `);
+    D.shadow && (th += `--mt-shadow: ${o(D.shadow)}; `);
+
     const t = e.attributes ?? {}, a = Number.isFinite(Number(t.current_temperature)) ? Number(t.current_temperature) : null, n = Number.isFinite(Number(t.temperature)) ? Number(t.temperature) : null, d = E(t.min_temp, 30), p = E(t.max_temp, 100), x = this.snapToStep(n ?? p, d, p), S = this.config.keep_warm_entity ? (_ = (k = this._hass) == null ? void 0 : k.states[this.config.keep_warm_entity]) == null ? void 0 : _.state : void 0, h = e.state !== "off" && e.state !== "unavailable", M = this.sliderProgress(x, d, p), L = Array.isArray(t.operation_list) ? t.operation_list : [], T = String(t.operation_mode || ""), v = L.filter((g) => {
       const l = String(g).toLowerCase();
       return l !== "on" && l !== "off";
@@ -347,7 +363,7 @@ class W extends HTMLElement {
     ` : "";
     this.root.innerHTML = `
       <style>${b}</style>
-      <article class="card">
+      <article class="card" style="${th}">
         <header class="header">
           <div class="icon-bubble">
             <ha-icon icon="${$(this.config.icon, c.icon)}"></ha-icon>
