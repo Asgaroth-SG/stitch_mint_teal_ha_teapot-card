@@ -49,6 +49,8 @@ const DEFAULTS: Required<Pick<KettleConfig, 'name' | 'location' | 'icon' | 'show
   keep_warm_name: 'Поддержание тепла',
 };
 
+const TEMPERATURE_STEP = 5;
+
 const STYLE = `
 :host {
   display: block;
@@ -90,8 +92,13 @@ ha-icon { display: inline-flex; align-items: center; justify-content: center; li
 h2, h3, p { margin: 0; }
 h2 { font: 600 20px/28px "Manrope", system-ui, sans-serif; color: var(--kettle-text); }
 .location { margin-top: 1px; font-size: 12px; line-height: 16px; color: var(--kettle-muted); }
-.status { flex: 0 0 auto; padding: 4px 12px; border-radius: 999px; background: var(--kettle-container-high); color: var(--kettle-muted); font-size: 12px; line-height: 16px; }
-.status.active { background: var(--kettle-primary-container); color: var(--kettle-primary); }
+.power-toggle { flex: 0 0 auto; min-width: 92px; padding: 5px 8px 5px 10px; display: inline-flex; align-items: center; justify-content: space-between; gap: 7px; border: 0; border-radius: 999px; color: var(--kettle-muted); background: var(--kettle-container-high); cursor: pointer; font-size: 12px; line-height: 16px; text-align: left; vertical-align: middle; }
+.power-toggle.on { color: var(--kettle-primary); background: var(--kettle-primary-container); }
+.power-toggle-label { white-space: nowrap; }
+.power-track { width: 34px; height: 20px; padding: 3px; display: inline-flex; align-items: center; flex: 0 0 auto; border-radius: 999px; background: var(--kettle-outline); transition: background .15s ease; }
+.power-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--kettle-muted); box-shadow: 0 1px 3px rgb(0 0 0 / 20%); transition: transform .15s ease, background .15s ease; }
+.power-toggle.on .power-track { background: var(--kettle-primary); }
+.power-toggle.on .power-thumb { background: #fff; transform: translateX(14px); }
 .temperatures { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 16px; border-radius: 8px; background: var(--kettle-container); }
 .temperature { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .temperature.target { align-items: flex-end; text-align: right; }
@@ -102,7 +109,7 @@ h2 { font: 600 20px/28px "Manrope", system-ui, sans-serif; color: var(--kettle-t
 .slider-section { display: flex; flex-direction: column; gap: 8px; padding: 0 8px; }
 .slider-labels { display: flex; justify-content: space-between; color: var(--kettle-muted); font-size: 12px; line-height: 16px; }
 input[type="range"] { width: 100%; height: 24px; margin: 0; appearance: none; background: transparent; cursor: pointer; }
-input[type="range"]::-webkit-slider-runnable-track { height: 8px; border-radius: 999px; background: linear-gradient(to right, var(--kettle-primary) var(--progress, 100%), var(--kettle-outline) var(--progress, 100%)); }
+input[type="range"]::-webkit-slider-runnable-track { height: 8px; border-radius: 999px; background: linear-gradient(to right, var(--kettle-primary) var(--progress, 100%), var(--kettle-outline) var(--progress, 100%)); transition: background .12s ease; }
 input[type="range"]::-moz-range-track { height: 8px; border-radius: 999px; background: var(--kettle-outline); }
 input[type="range"]::-moz-range-progress { height: 8px; border-radius: 999px; background: var(--kettle-primary); }
 input[type="range"]::-webkit-slider-thumb { width: 24px; height: 24px; margin-top: -8px; appearance: none; border: 0; border-radius: 50%; background: var(--kettle-primary); box-shadow: 0 2px 4px rgb(0 0 0 / 20%); }
@@ -200,23 +207,27 @@ class StitchMintTealKettleCard extends HTMLElement {
   private root: ShadowRoot;
   private boundClick: (event: Event) => void;
   private boundInput: (event: Event) => void;
+  private boundChange: (event: Event) => void;
 
   constructor() {
     super();
     this.root = this.attachShadow({ mode: 'open' });
     this.boundClick = (event) => this.handleClick(event);
     this.boundInput = (event) => this.handleInput(event);
+    this.boundChange = (event) => this.handleChange(event);
   }
 
   connectedCallback(): void {
     this.root.addEventListener('click', this.boundClick);
     this.root.addEventListener('input', this.boundInput);
+    this.root.addEventListener('change', this.boundChange);
     this.render();
   }
 
   disconnectedCallback(): void {
     this.root.removeEventListener('click', this.boundClick);
     this.root.removeEventListener('input', this.boundInput);
+    this.root.removeEventListener('change', this.boundChange);
   }
 
   setConfig(config: KettleConfig): void {
@@ -260,15 +271,20 @@ class StitchMintTealKettleCard extends HTMLElement {
     if (output) output.textContent = formatTemperature(temperature);
   }
 
+  private handleChange(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    if (target.dataset.action !== 'temperature') return;
+    const temperature = Number(target.value);
+    if (!Number.isFinite(temperature)) return;
+    void this.call('set_temperature', { temperature });
+  }
+
   private handleClick(event: Event): void {
     const target = event.target as HTMLElement;
     const button = target.closest<HTMLElement>('[data-action]');
     if (!button || !this.config) return;
     const action = button.dataset.action;
-    if (action === 'temperature') {
-      const slider = button as HTMLInputElement;
-      void this.call('set_temperature', { temperature: Number(slider.value) });
-    } else if (action === 'toggle') {
+    if (action === 'toggle') {
       void this.toggleKeepWarm();
     } else if (action === 'mode' && button.dataset.value) {
       void this.call('set_operation_mode', { operation_mode: button.dataset.value });
@@ -298,6 +314,12 @@ class StitchMintTealKettleCard extends HTMLElement {
     return Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
   }
 
+  private snapToStep(value: number, min: number, max: number): number {
+    if (!Number.isFinite(value) || !Number.isFinite(min) || !Number.isFinite(max) || max <= min) return max;
+    const snapped = min + Math.round((value - min) / TEMPERATURE_STEP) * TEMPERATURE_STEP;
+    return Math.max(min, Math.min(max, snapped));
+  }
+
   private render(): void {
     if (!this.config) {
       this.root.innerHTML = `<style>${STYLE}</style><div class="card"><div class="error">Настройте entity чайника в редакторе карточки.</div></div>`;
@@ -313,15 +335,13 @@ class StitchMintTealKettleCard extends HTMLElement {
     const target = Number.isFinite(Number(attributes.temperature)) ? Number(attributes.temperature) : null;
     const min = numberAttribute(attributes.min_temp, 30);
     const max = numberAttribute(attributes.max_temp, 100);
-    const sliderValue = Math.max(min, Math.min(max, target ?? max));
-    const modes = this.config.show_modes ? normalizeModes(this.config.modes) : [];
-    const operationMode = typeof attributes.operation_mode === 'string' ? attributes.operation_mode : state.state;
+    const sliderValue = this.snapToStep(target ?? max, min, max);
     const warmState = this.config.keep_warm_entity ? this._hass?.states[this.config.keep_warm_entity]?.state : undefined;
     const active = state.state !== 'off' && state.state !== 'unavailable';
-    const modesMarkup = modes.length ? `<section><h3 class="section-title">Режимы</h3><div class="modes">${modes.map((mode) => `<button class="mode ${operationMode === mode.value ? 'selected' : ''}" data-action="mode" data-value="${escapeHtml(mode.value)}" aria-label="${escapeHtml(mode.label)}"><ha-icon class="mode-icon" icon="${safeIcon(mode.icon, 'mdi:tea')}"></ha-icon><span class="mode-label">${escapeHtml(mode.label)}</span></button>`).join('')}</div></section>` : '';
+    const powerLabel = active ? 'Включен' : 'Выключен';
     const warmMarkup = this.config.keep_warm_entity ? `<button class="warm-row" data-action="toggle" aria-label="${escapeHtml(this.config.keep_warm_name)}"><span class="warm-content"><span class="warm-icon"><ha-icon class="small-icon" icon="mdi:snowflake-thermometer"></ha-icon></span><span class="warm-label">${escapeHtml(this.config.keep_warm_name)}</span></span><span class="toggle ${warmState === 'on' ? 'on' : ''}" aria-hidden="true"><span class="toggle-thumb"></span></span></button>` : '';
     const progress = this.sliderProgress(sliderValue, min, max);
-    this.root.innerHTML = `<style>${STYLE}</style><article class="card"><header class="header"><span class="icon-bubble"><ha-icon class="device-icon" icon="${safeIcon(this.config.icon, DEFAULTS.icon)}"></ha-icon></span><div class="info"><h2>${escapeHtml(this.config.name)}</h2><p class="location">${escapeHtml(this.config.location)}</p></div><span class="status ${active ? 'active' : ''}">${escapeHtml(stateLabel(state.state))}</span></header><section class="temperatures"><div class="temperature"><span class="label">Текущая температура</span><strong class="value current">${formatTemperature(current)}</strong></div><span class="temperature-divider" aria-hidden="true"></span><div class="temperature target"><span class="label">Целевая температура</span><strong class="value" data-role="target-value">${formatTemperature(target)}</strong></div></section><section class="slider-section"><div class="slider-labels"><span>${formatTemperature(min)}</span><span>${formatTemperature(max)}</span></div><input aria-label="Целевая температура" data-action="temperature" type="range" min="${min}" max="${max}" step="1" value="${sliderValue}" style="--progress: ${progress}%"></section><button class="mode ${active ? 'selected' : ''}" data-action="power" aria-label="Включить или выключить чайник"><ha-icon class="mode-icon" icon="mdi:power"></ha-icon><span class="mode-label">Вкл/Выкл</span></button><div class="divider" aria-hidden="true"></div>${modesMarkup}${warmMarkup}</article>`;
+    this.root.innerHTML = `<style>${STYLE}</style><article class="card"><header class="header"><span class="icon-bubble"><ha-icon class="device-icon" icon="${safeIcon(this.config.icon, DEFAULTS.icon)}"></ha-icon></span><div class="info"><h2>${escapeHtml(this.config.name)}</h2><p class="location">${escapeHtml(this.config.location)}</p></div><button class="power-toggle ${active ? 'on' : ''}" data-action="power" role="switch" aria-checked="${active}" aria-label="${active ? 'Выключить' : 'Включить'} чайник"><span class="power-toggle-label">${powerLabel}</span><span class="power-track" aria-hidden="true"><span class="power-thumb"></span></span></button></header><section class="temperatures"><div class="temperature"><span class="label">Текущая температура</span><strong class="value current">${formatTemperature(current)}</strong></div><span class="temperature-divider" aria-hidden="true"></span><div class="temperature target"><span class="label">Целевая температура</span><strong class="value" data-role="target-value">${formatTemperature(target)}</strong></div></section><section class="slider-section"><div class="slider-labels"><span>${formatTemperature(min)}</span><span>${formatTemperature(max)}</span></div><input aria-label="Целевая температура" data-action="temperature" type="range" min="${min}" max="${max}" step="${TEMPERATURE_STEP}" value="${sliderValue}" style="--progress: ${progress}%"></section><div class="divider" aria-hidden="true"></div>${warmMarkup}</article>`;
   }
 }
 
