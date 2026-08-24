@@ -106,10 +106,10 @@ h2 { font: 600 16px/24px "Manrope", system-ui, sans-serif; color: var(--mt-on-su
 .slider-labels { display: flex; justify-content: space-between; font-size: 11px; font-weight: 500; color: var(--mt-outline); }
 input[type="range"] { width: 100%; height: 24px; margin: 0; appearance: none; background: transparent; cursor: pointer; }
 input[type="range"]::-webkit-slider-runnable-track { height: 8px; border-radius: 4px; background: linear-gradient(to right, var(--mt-primary) var(--progress, 100%), var(--mt-surface-dim) var(--progress, 100%)); }
-input[type="range"]::-webkit-slider-thumb { width: 24px; height: 24px; margin-top: -8px; appearance: none; border: 0; border-radius: 50%; background: var(--mt-primary); box-shadow: 0 2px 4px rgb(0 0 0 / 20%); }
+input[type="range"]::-webkit-slider-thumb { appearance: none; width: 16px; height: 24px; margin-top: -8px; background: transparent; border: 0; box-shadow: none; cursor: pointer; }
 input[type="range"]::-moz-range-track { height: 8px; border-radius: 4px; background: var(--mt-surface-dim); }
 input[type="range"]::-moz-range-progress { height: 8px; border-radius: 4px; background: var(--mt-primary); }
-input[type="range"]::-moz-range-thumb { width: 24px; height: 24px; border: 0; border-radius: 50%; background: var(--mt-primary); box-shadow: 0 2px 4px rgb(0 0 0 / 20%); }
+input[type="range"]::-moz-range-thumb { appearance: none; width: 16px; height: 24px; background: transparent; border: 0; box-shadow: none; cursor: pointer; }
 
 .divider { width: 100%; height: 1px; background: var(--mt-border); }
 
