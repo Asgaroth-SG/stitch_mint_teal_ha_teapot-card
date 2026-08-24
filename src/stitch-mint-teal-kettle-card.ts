@@ -8,12 +8,6 @@ type HomeAssistant = {
   callService: (domain: string, service: string, data: Record<string, unknown>) => Promise<void> | void;
 };
 
-type KettleMode = {
-  label: string;
-  value: string;
-  icon?: string;
-};
-
 type KettleConfig = {
   type: string;
   entity: string;
@@ -21,7 +15,6 @@ type KettleConfig = {
   location?: string;
   icon?: string;
   show_modes?: boolean;
-  modes?: KettleMode[];
   keep_warm_entity?: string;
   keep_warm_name?: string;
   power_on_mode?: string;
@@ -29,17 +22,6 @@ type KettleConfig = {
 };
 
 type EditorConfig = Partial<KettleConfig> & { entity?: string };
-
-const DEFAULT_MODES: KettleMode[] = [
-  { label: 'Белый чай', value: 'white_tea', icon: 'mdi:tea' },
-  { label: 'Зелёный чай', value: 'green_tea', icon: 'mdi:tea' },
-  { label: 'Красный чай', value: 'red_tea', icon: 'mdi:tea' },
-  { label: 'Травяной чай', value: 'herbal_tea', icon: 'mdi:leaf' },
-  { label: 'Цветочный', value: 'flower_tea', icon: 'mdi:flower' },
-  { label: 'Пуэр', value: 'puerh_tea', icon: 'mdi:tea' },
-  { label: 'Улун', value: 'oolong_tea', icon: 'mdi:tea' },
-  { label: 'Чёрный чай', value: 'black_tea', icon: 'mdi:tea' },
-];
 
 const DEFAULTS: Required<Pick<KettleConfig, 'name' | 'location' | 'icon' | 'show_modes' | 'keep_warm_name'>> = {
   name: 'Чайник',
@@ -87,7 +69,6 @@ const STYLE = `
 ha-icon { display: inline-flex; align-items: center; justify-content: center; line-height: 0; }
 .device-icon { --mdc-icon-size: 30px; }
 .small-icon { --mdc-icon-size: 17px; }
-.mode-icon { --mdc-icon-size: 22px; }
 .info { min-width: 0; flex: 1; }
 h2, h3, p { margin: 0; }
 h2 { font: 600 20px/28px "Manrope", system-ui, sans-serif; color: var(--kettle-text); }
@@ -115,15 +96,17 @@ input[type="range"]::-moz-range-progress { height: 8px; border-radius: 999px; ba
 input[type="range"]::-webkit-slider-thumb { width: 24px; height: 24px; margin-top: -8px; appearance: none; border: 0; border-radius: 50%; background: var(--kettle-primary); box-shadow: 0 2px 4px rgb(0 0 0 / 20%); }
 input[type="range"]::-moz-range-thumb { width: 24px; height: 24px; border: 0; border-radius: 50%; background: var(--kettle-primary); box-shadow: 0 2px 4px rgb(0 0 0 / 20%); }
 .divider { width: 100%; height: 1px; background: color-mix(in srgb, var(--kettle-primary) 15%, transparent); }
-.section-title { margin-bottom: 8px; color: var(--kettle-muted); font-size: 14px; line-height: 18px; font-weight: 600; }
-.modes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+
+/* Новые стили для классического выпадающего списка */
+.mode-selector-wrapper { position: relative; width: 100%; }
+.mode-selector { width: 100%; padding: 12px 36px 12px 12px; border: 0; border-radius: 12px; color: var(--kettle-text); background: var(--kettle-container); font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; appearance: none; transition: background .15s ease; }
+.mode-selector:hover { background: color-mix(in srgb, var(--kettle-container) 80%, var(--kettle-primary) 20%); }
+.mode-selector:focus-visible { outline: 2px solid var(--kettle-primary); outline-offset: 2px; }
+.mode-selector-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--kettle-muted); --mdc-icon-size: 24px; }
+
 button { font: inherit; }
-.mode, .warm-row { border: 0; cursor: pointer; }
-.mode { min-height: 62px; padding: 8px 4px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center; vertical-align: middle; border-radius: 12px; color: var(--kettle-muted); background: var(--kettle-container-high); transition: transform .15s ease, background .15s ease; }
-.mode:hover { background: var(--kettle-container); }
-.mode:active, .warm-row:active { transform: scale(.97); }
-.mode.selected { color: var(--text-primary-color, #fff); background: var(--kettle-primary); }
-.mode-label { font-size: 10px; line-height: 13px; }
+.warm-row { border: 0; cursor: pointer; }
+.warm-row:active { transform: scale(.97); }
 .warm-row { width: 100%; padding: 12px; display: flex; align-items: center; justify-content: space-between; text-align: left; border-radius: 12px; color: var(--kettle-text); background: var(--kettle-container); }
 .warm-content { min-width: 0; display: flex; align-items: center; gap: 12px; }
 .warm-label { font-size: 14px; line-height: 20px; }
@@ -133,12 +116,7 @@ button { font: inherit; }
 .toggle.on .toggle-thumb { background: #fff; transform: translateX(24px); }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--kettle-primary); outline-offset: 2px; }
 .error { padding: 12px; border-radius: 10px; color: var(--error-color, #ba1a1a); background: var(--error-background-color, #ffdad6); font-size: 13px; }
-@media (max-width: 340px) { .card { padding: 12px; gap: 16px; } .modes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-
-.modes-dropdown { display: flex; flex-direction: column; gap: 8px; width: 100%; }
-.modes-toggle { width: 100%; padding: 12px; display: flex; align-items: center; justify-content: space-between; text-align: left; border: 0; border-radius: 12px; color: var(--kettle-text); background: var(--kettle-container); cursor: pointer; transition: background .15s ease, transform .1s ease; }
-.modes-toggle:active { transform: scale(.98); }
-.modes-toggle-label { font-size: 14px; line-height: 20px; font-weight: 500; }
+@media (max-width: 340px) { .card { padding: 12px; gap: 16px; } }
 `;
 
 const EDITOR_STYLE = `
@@ -150,13 +128,7 @@ input, select { width: 100%; min-height: 40px; padding: 8px 10px; color: inherit
 input:focus, select:focus { outline: 2px solid var(--primary-color, #00685d); outline-offset: 1px; }
 .checkbox { display: flex; grid-template-columns: none; align-items: center; gap: 8px; }
 .checkbox input { width: 18px; min-height: 18px; }
-fieldset { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--divider-color, #bcc9c5); border-radius: 10px; }
-legend { padding: 0 4px; font-weight: 600; }
-.mode-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 6px; align-items: end; }
-button { min-height: 36px; padding: 6px 10px; border: 0; border-radius: 8px; cursor: pointer; color: var(--text-primary-color, white); background: var(--primary-color, #00685d); font: inherit; }
-button.secondary { color: var(--primary-text-color, #0f1e1c); background: var(--secondary-background-color, #e0f2ee); }
 .help { color: var(--secondary-text-color, #6d7a77); font-size: 12px; line-height: 16px; }
-@media (max-width: 520px) { .mode-row { grid-template-columns: 1fr 1fr; } }
 `;
 
 function escapeHtml(value: unknown): string {
@@ -173,25 +145,8 @@ function numberAttribute(value: unknown, fallback: number): number {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-function normalizeModes(value: unknown): KettleMode[] {
-  if (!Array.isArray(value)) return DEFAULT_MODES;
-  return value
-    .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null)
-    .map((item) => ({
-      label: typeof item.label === 'string' && item.label.trim() ? item.label.trim() : 'Режим',
-      value: typeof item.value === 'string' && item.value.trim() ? item.value.trim() : '',
-      icon: safeIcon(item.icon, 'mdi:tea'),
-    }))
-    .filter((item) => item.value);
-}
-
 function formatTemperature(value: number | null): string {
   return value === null ? '—' : `${Math.round(value)}°C`;
-}
-
-function stateLabel(state: string): string {
-  const labels: Record<string, string> = { off: 'выкл', heating: 'нагрев', idle: 'готов', on: 'вкл', unavailable: 'недоступен', unknown: 'нет данных' };
-  return labels[state] ?? (state || 'нет данных');
 }
 
 function fireConfigChanged(element: HTMLElement, config: EditorConfig): void {
@@ -213,7 +168,6 @@ class StitchMintTealKettleCard extends HTMLElement {
   private boundClick: (event: Event) => void;
   private boundInput: (event: Event) => void;
   private boundChange: (event: Event) => void;
-  private modesExpanded: boolean = false;
 
   constructor() {
     super();
@@ -248,7 +202,6 @@ class StitchMintTealKettleCard extends HTMLElement {
       icon: safeIcon(config.icon, DEFAULTS.icon),
       show_modes: config.show_modes ?? DEFAULTS.show_modes,
       keep_warm_name: config.keep_warm_name ?? DEFAULTS.keep_warm_name,
-      modes: normalizeModes(config.modes),
       power_on_mode: config.power_on_mode ?? 'on',
       power_off_mode: config.power_off_mode ?? 'off',
     };
@@ -278,11 +231,19 @@ class StitchMintTealKettleCard extends HTMLElement {
   }
 
   private handleChange(event: Event): void {
-    const target = event.target as HTMLInputElement;
-    if (target.dataset.action !== 'temperature') return;
-    const temperature = Number(target.value);
-    if (!Number.isFinite(temperature)) return;
-    void this.call('set_temperature', { temperature });
+    const target = event.target as HTMLInputElement | HTMLSelectElement;
+    
+    if (target.dataset.action === 'temperature') {
+      const temperature = Number(target.value);
+      if (!Number.isFinite(temperature)) return;
+      void this.call('set_temperature', { temperature });
+    } else if (target.dataset.action === 'select-mode') {
+      // Обработка выбора режима из выпадающего списка
+      const operation_mode = target.value;
+      if (operation_mode) {
+        void this.call('set_operation_mode', { operation_mode });
+      }
+    }
   }
 
   private handleClick(event: Event): void {
@@ -291,16 +252,8 @@ class StitchMintTealKettleCard extends HTMLElement {
     if (!button || !this.config) return;
     const action = button.dataset.action;
 
-    if (action === 'toggle-modes') {
-      this.modesExpanded = !this.modesExpanded;
-      this.render();
-      return;
-    }
-
     if (action === 'toggle') {
       void this.toggleKeepWarm();
-    } else if (action === 'mode' && button.dataset.value) {
-      void this.call('set_operation_mode', { operation_mode: button.dataset.value });
     } else if (action === 'power') {
       const operationMode = this.currentState() === 'off'
         ? this.config.power_on_mode ?? 'on'
@@ -356,27 +309,23 @@ class StitchMintTealKettleCard extends HTMLElement {
     const warmMarkup = this.config.keep_warm_entity ? `<button class="warm-row" data-action="toggle" aria-label="${escapeHtml(this.config.keep_warm_name)}"><span class="warm-content"><span class="warm-icon"><ha-icon class="small-icon" icon="mdi:snowflake-thermometer"></ha-icon></span><span class="warm-label">${escapeHtml(this.config.keep_warm_name)}</span></span><span class="toggle ${warmState === 'on' ? 'on' : ''}" aria-hidden="true"><span class="toggle-thumb"></span></span></button>` : '';
     const progress = this.sliderProgress(sliderValue, min, max);
 
-    const currentMode = state.attributes.operation_mode;
+    // Динамическое получение режимов из сущности
+    const operationList = Array.isArray(attributes.operation_list) ? attributes.operation_list : [];
+    const currentMode = String(attributes.operation_mode || '');
 
     let modesMarkup = '';
-    if (this.config.show_modes !== false && this.config.modes && this.config.modes.length > 0) {
+    if (this.config.show_modes !== false && operationList.length > 0) {
       modesMarkup = `
         <div class="divider" aria-hidden="true"></div>
-        <div class="modes-dropdown">
-          <button class="modes-toggle" data-action="toggle-modes" aria-expanded="${this.modesExpanded}">
-            <span class="modes-toggle-label">Режимы нагрева</span>
-            <ha-icon icon="${this.modesExpanded ? 'mdi:chevron-up' : 'mdi:chevron-down'}"></ha-icon>
-          </button>
-          ${this.modesExpanded ? `
-            <div class="modes">
-              ${this.config.modes.map(mode => `
-                <button class="mode ${currentMode === mode.value ? 'selected' : ''}" data-action="mode" data-value="${escapeHtml(mode.value)}">
-                  <ha-icon class="mode-icon" icon="${escapeHtml(mode.icon)}"></ha-icon>
-                  <span class="mode-label">${escapeHtml(mode.label)}</span>
-                </button>
-              `).join('')}
-            </div>
-          ` : ''}
+        <div class="mode-selector-wrapper">
+          <select class="mode-selector" data-action="select-mode" aria-label="Режим нагрева">
+            <option value="" disabled ${!currentMode ? 'selected' : ''}>Выберите режим...</option>
+            ${operationList.map(mode => {
+              const modeStr = String(mode);
+              return `<option value="${escapeHtml(modeStr)}" ${currentMode === modeStr ? 'selected' : ''}>${escapeHtml(modeStr)}</option>`;
+            }).join('')}
+          </select>
+          <ha-icon class="mode-selector-icon" icon="mdi:chevron-down"></ha-icon>
         </div>
       `;
     }
@@ -389,28 +338,24 @@ class StitchMintTealKettleCardEditor extends HTMLElement {
   private config: EditorConfig = {};
   private root: ShadowRoot;
   private boundChange: (event: Event) => void;
-  private boundClick: (event: Event) => void;
 
   constructor() {
     super();
     this.root = this.attachShadow({ mode: 'open' });
     this.boundChange = (event) => this.handleChange(event);
-    this.boundClick = (event) => this.handleClick(event);
   }
 
   connectedCallback(): void {
     this.root.addEventListener('change', this.boundChange);
-    this.root.addEventListener('click', this.boundClick);
     this.render();
   }
 
   disconnectedCallback(): void {
     this.root.removeEventListener('change', this.boundChange);
-    this.root.removeEventListener('click', this.boundClick);
   }
 
   setConfig(config: EditorConfig): void {
-    this.config = { ...config, modes: normalizeModes(config.modes) };
+    this.config = { ...config };
     this.render();
   }
 
@@ -432,35 +377,9 @@ class StitchMintTealKettleCardEditor extends HTMLElement {
     }
   }
 
-  private handleClick(event: Event): void {
-    const target = event.target as HTMLElement;
-    const action = target.closest<HTMLElement>('[data-editor-action]')?.dataset.editorAction;
-    if (action === 'add-mode') {
-      const modes = normalizeModes(this.config.modes);
-      this.emit({ modes: [...modes, { label: 'Новый режим', value: `mode_${modes.length + 1}`, icon: 'mdi:tea' }] });
-      this.render();
-    }
-    if (action?.startsWith('delete-mode-')) {
-      const index = Number(action.slice('delete-mode-'.length));
-      const modes = normalizeModes(this.config.modes).filter((_mode, modeIndex) => modeIndex !== index);
-      this.emit({ modes });
-      this.render();
-    }
-  }
-
   private render(): void {
-    const modes = normalizeModes(this.config.modes);
-    const modeRows = modes.map((mode, index) => `<div class="mode-row"><label>Название<input data-mode-index="${index}" data-mode-key="label" value="${escapeHtml(mode.label)}"></label><label>Значение<input data-mode-index="${index}" data-mode-key="value" value="${escapeHtml(mode.value)}"></label><label>Иконка<input data-mode-index="${index}" data-mode-key="icon" value="${escapeHtml(mode.icon ?? 'mdi:tea')}"></label><button class="secondary" type="button" data-editor-action="delete-mode-${index}" aria-label="Удалить режим">Удалить</button></div>`).join('');
-    this.root.innerHTML = `<style>${EDITOR_STYLE}</style><div class="form"><label>Entity чайника *<input data-key="entity" placeholder="water_heater.kettle" value="${escapeHtml(this.config.entity ?? '')}"></label><span class="help">Укажите точный entity_id из Settings → Devices & services → Entities.</span><label>Название<input data-key="name" value="${escapeHtml(this.config.name ?? DEFAULTS.name)}"></label><label>Расположение<input data-key="location" value="${escapeHtml(this.config.location ?? DEFAULTS.location)}"></label><label>Иконка<input data-key="icon" value="${escapeHtml(this.config.icon ?? DEFAULTS.icon)}"></label><label class="checkbox"><input data-key="show_modes" type="checkbox" ${this.config.show_modes !== false ? 'checked' : ''}>Показывать режимы чая</label><label>Режим включения<input data-key="power_on_mode" value="${escapeHtml(this.config.power_on_mode ?? 'on')}"></label><label>Режим выключения<input data-key="power_off_mode" value="${escapeHtml(this.config.power_off_mode ?? 'off')}"></label><span class="help">Значения должны входить в attributes.operation_list у water_heater entity.</span><label>Entity поддержания тепла<input data-key="keep_warm_entity" placeholder="switch.kettle_keep_warm" value="${escapeHtml(this.config.keep_warm_entity ?? '')}"></label><label>Название поддержания тепла<input data-key="keep_warm_name" value="${escapeHtml(this.config.keep_warm_name ?? DEFAULTS.keep_warm_name)}"></label><fieldset><legend>Режимы чая</legend>${modeRows || '<span class="help">Режимы отключены или не заданы.</span>'}<button type="button" data-editor-action="add-mode">Добавить режим</button></fieldset></div>`;
-    this.root.querySelectorAll<HTMLInputElement>('[data-mode-index]').forEach((input) => input.addEventListener('change', (event) => this.handleModeChange(event)));
-  }
-
-  private handleModeChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const index = Number(input.dataset.modeIndex);
-    const key = input.dataset.modeKey as keyof KettleMode;
-    const modes = normalizeModes(this.config.modes).map((mode, modeIndex) => modeIndex === index ? { ...mode, [key]: input.value } : mode);
-    this.emit({ modes });
+    // Редактор больше не содержит настроек массива режимов
+    this.root.innerHTML = `<style>${EDITOR_STYLE}</style><div class="form"><label>Entity чайника *<input data-key="entity" placeholder="water_heater.kettle" value="${escapeHtml(this.config.entity ?? '')}"></label><span class="help">Укажите точный entity_id из Settings → Devices & services → Entities.</span><label>Название<input data-key="name" value="${escapeHtml(this.config.name ?? DEFAULTS.name)}"></label><label>Расположение<input data-key="location" value="${escapeHtml(this.config.location ?? DEFAULTS.location)}"></label><label>Иконка<input data-key="icon" value="${escapeHtml(this.config.icon ?? DEFAULTS.icon)}"></label><label class="checkbox"><input data-key="show_modes" type="checkbox" ${this.config.show_modes !== false ? 'checked' : ''}>Показывать выпадающий список режимов</label><span class="help">Режимы загружаются автоматически из атрибута operation_list.</span><label>Режим включения<input data-key="power_on_mode" value="${escapeHtml(this.config.power_on_mode ?? 'on')}"></label><label>Режим выключения<input data-key="power_off_mode" value="${escapeHtml(this.config.power_off_mode ?? 'off')}"></label><span class="help">Значения должны входить в attributes.operation_list у water_heater entity.</span><label>Entity поддержания тепла<input data-key="keep_warm_entity" placeholder="switch.kettle_keep_warm" value="${escapeHtml(this.config.keep_warm_entity ?? '')}"></label><label>Название поддержания тепла<input data-key="keep_warm_name" value="${escapeHtml(this.config.keep_warm_name ?? DEFAULTS.keep_warm_name)}"></label></div>`;
   }
 }
 
