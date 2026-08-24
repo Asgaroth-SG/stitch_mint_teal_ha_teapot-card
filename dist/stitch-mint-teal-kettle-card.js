@@ -1,26 +1,32 @@
-var z = Object.defineProperty;
-var N = (a, i, e) => i in a ? z(a, i, { enumerable: !0, configurable: !0, writable: !0, value: e }) : a[i] = e;
-var s = (a, i, e) => N(a, typeof i != "symbol" ? i + "" : i, e);
-const l = {
+var L = Object.defineProperty;
+var N = (r, i, e) => i in r ? L(r, i, { enumerable: !0, configurable: !0, writable: !0, value: e }) : r[i] = e;
+var s = (r, i, e) => N(r, typeof i != "symbol" ? i + "" : i, e);
+const c = {
   name: "Чайник",
   location: "Кухня",
-  icon: "mdi:kettle-steam",
+  icon: "mdi:kettle",
   show_modes: !0,
   keep_warm_name: "Поддержание тепла"
-}, g = 5, b = `
+}, g = 5, f = `
 :host {
   display: block;
-  color: var(--primary-text-color, #0f1e1c);
-  font-family: var(--paper-font-body1_-_font-family, "Work Sans", system-ui, sans-serif);
-  --kettle-bg: var(--ha-card-background, var(--card-background-color, #ecfdf9));
-  --kettle-surface: var(--primary-background-color, #ecfdf9);
-  --kettle-container: var(--secondary-background-color, #e0f2ee);
-  --kettle-container-high: var(--ha-card-border-color, #dbece8);
-  --kettle-text: var(--primary-text-color, #0f1e1c);
-  --kettle-muted: var(--secondary-text-color, #6d7a77);
-  --kettle-primary: var(--primary-color, #00685d);
-  --kettle-primary-container: var(--light-primary-color, #81f3e5);
-  --kettle-outline: var(--divider-color, #bcc9c5);
+  /* Mint Teal System Colors */
+  --mt-surface: #ecfdf9;
+  --mt-surface-dim: #ccdeda;
+  --mt-surface-container: #e0f2ee;
+  --mt-surface-container-high: #dbece8;
+  --mt-surface-container-low: #e6f7f4;
+  --mt-surface-variant: #d5e6e3;
+  --mt-on-surface: #0f1e1c;
+  --mt-on-surface-variant: #3d4946;
+  --mt-outline: #6d7a77;
+  --mt-outline-variant: #bcc9c5;
+  --mt-primary: #00685d;
+  --mt-on-primary: #ffffff;
+  --mt-tertiary: #4f5f5f;
+  
+  font-family: "Work Sans", system-ui, sans-serif;
+  color: var(--mt-on-surface);
 }
 * { box-sizing: border-box; }
 .card {
@@ -28,70 +34,119 @@ const l = {
   max-width: 460px;
   margin: 0 auto;
   padding: 16px;
-  border: 1px solid color-mix(in srgb, var(--kettle-primary) 15%, transparent);
+  background: var(--mt-surface);
   border-radius: 16px;
-  background: var(--kettle-bg);
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--kettle-primary) 8%, transparent);
+  border: 1px solid rgba(0, 137, 123, 0.15);
+  box-shadow: 0px 2px 8px rgba(0, 137, 123, 0.08);
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
+  transition: box-shadow 0.3s ease;
 }
-.header { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.icon-bubble, .warm-icon { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; border-radius: 50%; color: var(--kettle-muted); background: var(--kettle-container-high); }
-.icon-bubble { width: 56px; height: 56px; }
-.warm-icon { width: 32px; height: 32px; }
-ha-icon { display: inline-flex; align-items: center; justify-content: center; line-height: 0; }
-.device-icon { --mdc-icon-size: 30px; }
-.small-icon { --mdc-icon-size: 17px; }
+.card:hover {
+  box-shadow: 0px 8px 16px rgba(0, 137, 123, 0.12);
+}
+
+/* Header Row */
+.header { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.icon-bubble { 
+  display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; 
+  width: 56px; height: 56px; border-radius: 50%; 
+  background: var(--mt-surface-variant); color: var(--mt-tertiary); transition: background .3s;
+}
+.icon-bubble ha-icon { --mdc-icon-size: 28px; }
 .info { min-width: 0; flex: 1; }
-h2, h3, p { margin: 0; }
-h2 { font: 600 20px/28px "Manrope", system-ui, sans-serif; color: var(--kettle-text); }
-.location { margin-top: 1px; font-size: 12px; line-height: 16px; color: var(--kettle-muted); }
-.power-toggle { flex: 0 0 auto; min-width: 92px; padding: 5px 8px 5px 10px; display: inline-flex; align-items: center; justify-content: space-between; gap: 7px; border: 0; border-radius: 999px; color: var(--kettle-muted); background: var(--kettle-container-high); cursor: pointer; font-size: 12px; line-height: 16px; text-align: left; vertical-align: middle; }
-.power-toggle.on { color: var(--kettle-primary); background: var(--kettle-primary-container); }
-.power-toggle-label { white-space: nowrap; }
-.power-track { width: 34px; height: 20px; padding: 3px; display: inline-flex; align-items: center; flex: 0 0 auto; border-radius: 999px; background: var(--kettle-outline); transition: background .15s ease; }
-.power-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--kettle-muted); box-shadow: 0 1px 3px rgb(0 0 0 / 20%); transition: transform .15s ease, background .15s ease; }
-.power-toggle.on .power-track { background: var(--kettle-primary); }
-.power-toggle.on .power-thumb { background: #fff; transform: translateX(14px); }
-.temperatures { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 16px; border-radius: 8px; background: var(--kettle-container); }
-.temperature { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+h2, p { margin: 0; }
+h2 { font: 600 20px/28px "Manrope", system-ui, sans-serif; color: var(--mt-on-surface); letter-spacing: -0.01em; }
+.location { font-size: 12px; font-weight: 500; line-height: 16px; color: var(--mt-outline); margin-top: 2px; }
+.power-badge { 
+  flex: 0 0 auto; padding: 4px 12px; border: 0; border-radius: 999px; cursor: pointer;
+  font: 500 12px/16px "Work Sans", sans-serif; 
+  color: var(--mt-on-surface-variant); background: var(--mt-surface-container-high); 
+  transition: all 0.2s ease;
+}
+.power-badge.active { color: var(--mt-on-primary); background: var(--mt-primary); }
+.power-badge:active { transform: scale(0.95); }
+
+/* Temperatures */
+.temperatures { 
+  display: flex; justify-content: space-between; align-items: center; 
+  padding: 8px 16px; border-radius: 8px; background: var(--mt-surface-container); 
+}
+.temperature { display: flex; flex-direction: column; gap: 2px; }
 .temperature.target { align-items: flex-end; text-align: right; }
-.label { color: var(--kettle-muted); font-size: 12px; line-height: 16px; }
-.value { color: var(--kettle-text); font: 600 20px/28px "Manrope", system-ui, sans-serif; }
-.value.current { color: var(--kettle-primary); }
-.temperature-divider { width: 1px; height: 40px; background: var(--kettle-outline); opacity: .55; }
+.temp-label { font-size: 12px; font-weight: 500; color: var(--mt-outline); }
+.temp-current { font: 600 24px/32px "Manrope", sans-serif; color: var(--mt-primary); letter-spacing: -0.01em; }
+.temp-target { font: 600 20px/28px "Manrope", sans-serif; color: var(--mt-on-surface); }
+.temp-divider { width: 1px; height: 40px; background: var(--mt-outline-variant); opacity: 0.5; }
+
+/* Slider */
 .slider-section { display: flex; flex-direction: column; gap: 8px; padding: 0 8px; }
-.slider-labels { display: flex; justify-content: space-between; color: var(--kettle-muted); font-size: 12px; line-height: 16px; }
+.slider-labels { display: flex; justify-content: space-between; font-size: 12px; font-weight: 500; color: var(--mt-outline); }
 input[type="range"] { width: 100%; height: 24px; margin: 0; appearance: none; background: transparent; cursor: pointer; }
-input[type="range"]::-webkit-slider-runnable-track { height: 8px; border-radius: 999px; background: linear-gradient(to right, var(--kettle-primary) var(--progress, 100%), var(--kettle-outline) var(--progress, 100%)); transition: background .12s ease; }
-input[type="range"]::-moz-range-track { height: 8px; border-radius: 999px; background: var(--kettle-outline); }
-input[type="range"]::-moz-range-progress { height: 8px; border-radius: 999px; background: var(--kettle-primary); }
-input[type="range"]::-webkit-slider-thumb { width: 24px; height: 24px; margin-top: -8px; appearance: none; border: 0; border-radius: 50%; background: var(--kettle-primary); box-shadow: 0 2px 4px rgb(0 0 0 / 20%); }
-input[type="range"]::-moz-range-thumb { width: 24px; height: 24px; border: 0; border-radius: 50%; background: var(--kettle-primary); box-shadow: 0 2px 4px rgb(0 0 0 / 20%); }
-.divider { width: 100%; height: 1px; background: color-mix(in srgb, var(--kettle-primary) 15%, transparent); }
+input[type="range"]::-webkit-slider-runnable-track { height: 8px; border-radius: 4px; background: linear-gradient(to right, var(--mt-primary) var(--progress, 100%), var(--mt-surface-dim) var(--progress, 100%)); }
+input[type="range"]::-webkit-slider-thumb { width: 24px; height: 24px; margin-top: -8px; appearance: none; border: 0; border-radius: 50%; background: var(--mt-primary); box-shadow: 0 2px 4px rgb(0 0 0 / 20%); }
+input[type="range"]::-moz-range-track { height: 8px; border-radius: 4px; background: var(--mt-surface-dim); }
+input[type="range"]::-moz-range-progress { height: 8px; border-radius: 4px; background: var(--mt-primary); }
+input[type="range"]::-moz-range-thumb { width: 24px; height: 24px; border: 0; border-radius: 50%; background: var(--mt-primary); box-shadow: 0 2px 4px rgb(0 0 0 / 20%); }
 
-/* Новые стили для классического выпадающего списка */
-.mode-selector-wrapper { position: relative; width: 100%; }
-.mode-selector { width: 100%; padding: 12px 36px 12px 12px; border: 0; border-radius: 12px; color: var(--kettle-text); background: var(--kettle-container); font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; appearance: none; transition: background .15s ease; }
-.mode-selector:hover { background: color-mix(in srgb, var(--kettle-container) 80%, var(--kettle-primary) 20%); }
-.mode-selector:focus-visible { outline: 2px solid var(--kettle-primary); outline-offset: 2px; }
-.mode-selector-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--kettle-muted); --mdc-icon-size: 24px; }
+.divider { width: 100%; height: 1px; background: rgba(0, 137, 123, 0.15); }
 
-button { font: inherit; }
-.warm-row { border: 0; cursor: pointer; }
-.warm-row:active { transform: scale(.97); }
-.warm-row { width: 100%; padding: 12px; display: flex; align-items: center; justify-content: space-between; text-align: left; border-radius: 12px; color: var(--kettle-text); background: var(--kettle-container); }
-.warm-content { min-width: 0; display: flex; align-items: center; gap: 12px; }
-.warm-label { font-size: 14px; line-height: 20px; }
-.toggle { width: 48px; height: 24px; padding: 4px; display: flex; align-items: center; border-radius: 999px; background: var(--kettle-outline); transition: background .15s ease; }
-.toggle-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--kettle-muted); box-shadow: 0 1px 3px rgb(0 0 0 / 20%); transition: transform .15s ease, background .15s ease; }
-.toggle.on { background: var(--kettle-primary); }
-.toggle.on .toggle-thumb { background: #fff; transform: translateX(24px); }
-button:focus-visible, input:focus-visible { outline: 2px solid var(--kettle-primary); outline-offset: 2px; }
-.error { padding: 12px; border-radius: 10px; color: var(--error-color, #ba1a1a); background: var(--error-background-color, #ffdad6); font-size: 13px; }
-@media (max-width: 340px) { .card { padding: 12px; gap: 16px; } }
-`, F = `
+/* Modes Accordion */
+.modes-section { display: flex; flex-direction: column; }
+.modes-toggle {
+  width: 100%; padding: 8px 0; border: 0; background: transparent; color: var(--mt-on-surface-variant);
+  display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-radius: 8px;
+  transition: background 0.2s;
+}
+.modes-toggle:hover { background: var(--mt-surface-container-low); padding: 8px; margin: 0 -8px; width: calc(100% + 16px); }
+.modes-toggle h3 { font: 600 14px/18px "Work Sans", sans-serif; margin: 0; }
+.modes-toggle ha-icon { transition: transform 0.3s ease; }
+.modes-toggle.open ha-icon { transform: rotate(180deg); }
+.modes-content { overflow: hidden; max-height: 0; transition: max-height 0.3s ease-in-out; }
+.modes-content.open { max-height: 500px; /* arbitrary large value for transition */ }
+.modes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding-top: 8px; }
+.mode-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  padding: 8px 4px; border: 0; border-radius: 12px; cursor: pointer;
+  background: var(--mt-surface-variant); color: var(--mt-on-surface-variant);
+  transition: all 0.2s ease;
+}
+.mode-btn:hover { background: var(--mt-surface-container-high); }
+.mode-btn:active { transform: scale(0.95); }
+.mode-btn.active { background: var(--mt-primary); color: var(--mt-on-primary); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.mode-btn ha-icon { --mdc-icon-size: 20px; }
+.mode-btn span { font-size: 10px; font-weight: 500; line-height: 1.2; text-align: center; }
+
+/* Keep Warm */
+.warm-row { 
+  width: 100%; padding: 12px; display: flex; align-items: center; justify-content: space-between; 
+  border: 0; border-radius: 12px; cursor: pointer; background: var(--mt-surface-container); 
+  transition: background 0.2s ease;
+}
+.warm-row:hover { background: var(--mt-surface-container-high); }
+.warm-row:active { transform: scale(0.98); }
+.warm-content { display: flex; align-items: center; gap: 12px; }
+.warm-icon-box { 
+  width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: var(--mt-surface-variant); color: var(--mt-on-surface-variant);
+}
+.warm-icon-box ha-icon { --mdc-icon-size: 16px; }
+.warm-label { font: 400 14px/20px "Work Sans", sans-serif; color: var(--mt-on-surface); }
+.toggle { 
+  width: 48px; height: 24px; padding: 4px; display: flex; align-items: center; 
+  border-radius: 999px; background: var(--mt-surface-dim); transition: background .2s ease; 
+}
+.toggle-thumb { 
+  width: 16px; height: 16px; border-radius: 50%; background: var(--mt-outline); 
+  box-shadow: 0 1px 3px rgb(0 0 0 / 10%); transition: transform .2s ease, background .2s ease; 
+}
+.warm-row.on .toggle { background: var(--mt-primary); }
+.warm-row.on .toggle-thumb { background: var(--mt-on-primary); transform: translateX(24px); }
+
+button:focus-visible, input:focus-visible { outline: 2px solid var(--mt-primary); outline-offset: 2px; }
+.error { padding: 12px; border-radius: 10px; color: #ba1a1a; background: #ffdad6; font-size: 13px; }
+`, z = `
 :host { display: block; font-family: var(--paper-font-body1_-_font-family, sans-serif); color: var(--primary-text-color, #0f1e1c); }
 * { box-sizing: border-box; }
 .form { display: grid; gap: 14px; padding: 4px 0; }
@@ -102,29 +157,30 @@ input:focus, select:focus { outline: 2px solid var(--primary-color, #00685d); ou
 .checkbox input { width: 18px; min-height: 18px; }
 .help { color: var(--secondary-text-color, #6d7a77); font-size: 12px; line-height: 16px; }
 `;
-function n(a) {
-  return String(a ?? "").replace(/[&<>'"]/g, (i) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[i] ?? i);
+function o(r) {
+  return String(r ?? "").replace(/[&<>'"]/g, (i) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[i] ?? i);
 }
-function $(a, i) {
-  const e = typeof a == "string" ? a.trim() : "";
+function _(r, i) {
+  const e = typeof r == "string" ? r.trim() : "";
   return /^(mdi|hass):[a-z0-9-]+$/i.test(e) ? e : i;
 }
-function C(a, i) {
-  const e = typeof a == "number" ? a : Number(a);
+function $(r, i) {
+  const e = typeof r == "number" ? r : Number(r);
   return Number.isFinite(e) ? e : i;
 }
-function p(a) {
-  return a === null ? "—" : `${Math.round(a)}°C`;
+function p(r) {
+  return r === null ? "—" : `${Math.round(r)}°C`;
 }
-function I(a, i) {
-  a.dispatchEvent(new CustomEvent("config-changed", { bubbles: !0, composed: !0, detail: { config: i } }));
+function F(r, i) {
+  r.dispatchEvent(new CustomEvent("config-changed", { bubbles: !0, composed: !0, detail: { config: i } }));
 }
-class H extends HTMLElement {
+class I extends HTMLElement {
   constructor() {
     super();
     s(this, "config", null);
     s(this, "_hass");
     s(this, "root");
+    s(this, "_modesExpanded", !1);
     s(this, "boundClick");
     s(this, "boundInput");
     s(this, "boundChange");
@@ -148,11 +204,11 @@ class H extends HTMLElement {
     this.config = {
       ...e,
       entity: e.entity.trim(),
-      name: e.name ?? l.name,
-      location: e.location ?? l.location,
-      icon: $(e.icon, l.icon),
-      show_modes: e.show_modes ?? l.show_modes,
-      keep_warm_name: e.keep_warm_name ?? l.keep_warm_name,
+      name: e.name ?? c.name,
+      location: e.location ?? c.location,
+      icon: _(e.icon, c.icon),
+      show_modes: e.show_modes ?? c.show_modes,
+      keep_warm_name: e.keep_warm_name ?? c.keep_warm_name,
       power_on_mode: e.power_on_mode ?? "on",
       power_off_mode: e.power_off_mode ?? "off"
     }, this.render();
@@ -169,37 +225,39 @@ class H extends HTMLElement {
   handleInput(e) {
     const t = e.target;
     if (t.dataset.action !== "temperature") return;
-    const r = Number(t.value);
-    if (!Number.isFinite(r)) return;
-    t.style.setProperty("--progress", `${this.sliderProgress(r, Number(t.min), Number(t.max))}%`);
-    const o = this.root.querySelector('[data-role="target-value"]');
-    o && (o.textContent = p(r));
+    const a = Number(t.value);
+    if (!Number.isFinite(a)) return;
+    t.style.setProperty("--progress", `${this.sliderProgress(a, Number(t.min), Number(t.max))}%`);
+    const n = this.root.querySelector('[data-role="target-value"]');
+    n && (n.textContent = p(a));
   }
   handleChange(e) {
     const t = e.target;
     if (t.dataset.action === "temperature") {
-      const r = Number(t.value);
-      if (!Number.isFinite(r)) return;
-      this.call("set_temperature", { temperature: r });
-    } else if (t.dataset.action === "select-mode") {
-      const r = t.value;
-      r && this.call("set_operation_mode", { operation_mode: r });
+      const a = Number(t.value);
+      if (!Number.isFinite(a)) return;
+      this.call("set_temperature", { temperature: a });
     }
   }
   handleClick(e) {
-    const r = e.target.closest("[data-action]");
-    if (!r || !this.config) return;
-    const o = r.dataset.action;
-    if (o === "toggle")
+    const a = e.target.closest("[data-action]");
+    if (!a || !this.config) return;
+    const n = a.dataset.action;
+    if (n === "toggle-warm")
       this.toggleKeepWarm();
-    else if (o === "power") {
-      const c = this.currentState() === "off" ? this.config.power_on_mode ?? "on" : this.config.power_off_mode ?? "off";
-      this.call("set_operation_mode", { operation_mode: c });
+    else if (n === "power") {
+      const d = this.currentState() === "off" ? this.config.power_on_mode ?? "on" : this.config.power_off_mode ?? "off";
+      this.call("set_operation_mode", { operation_mode: d });
+    } else if (n === "toggle-accordion")
+      this._modesExpanded = !this._modesExpanded, this.render();
+    else if (n === "set-mode") {
+      const d = a.dataset.mode;
+      d && this.call("set_operation_mode", { operation_mode: d });
     }
   }
   async toggleKeepWarm() {
-    var r;
-    if (!this._hass || !((r = this.config) != null && r.keep_warm_entity)) return;
+    var a;
+    if (!this._hass || !((a = this.config) != null && a.keep_warm_entity)) return;
     const e = this._hass.states[this.config.keep_warm_entity];
     if (!e) return;
     const t = this.config.keep_warm_entity.split(".")[0];
@@ -209,43 +267,109 @@ class H extends HTMLElement {
     var e, t;
     return this.config && ((t = (e = this._hass) == null ? void 0 : e.states[this.config.entity]) == null ? void 0 : t.state) || "unknown";
   }
-  sliderProgress(e, t, r) {
-    return !Number.isFinite(t) || !Number.isFinite(r) || r <= t ? 100 : Math.max(0, Math.min(100, (e - t) / (r - t) * 100));
+  sliderProgress(e, t, a) {
+    return !Number.isFinite(t) || !Number.isFinite(a) || a <= t ? 100 : Math.max(0, Math.min(100, (e - t) / (a - t) * 100));
   }
-  snapToStep(e, t, r) {
-    if (!Number.isFinite(e) || !Number.isFinite(t) || !Number.isFinite(r) || r <= t) return r;
-    const o = t + Math.round((e - t) / g) * g;
-    return Math.max(t, Math.min(r, o));
+  snapToStep(e, t, a) {
+    if (!Number.isFinite(e) || !Number.isFinite(t) || !Number.isFinite(a) || a <= t) return a;
+    const n = t + Math.round((e - t) / g) * g;
+    return Math.max(t, Math.min(a, n));
+  }
+  // Простой маппер для иконок режимов
+  getModeIcon(e) {
+    const t = e.toLowerCase();
+    return t.includes("power") || t.includes("off") ? "mdi:power" : t.includes("flower") || t.includes("цветоч") ? "mdi:flower" : t.includes("herb") || t.includes("травян") ? "mdi:leaf" : "mdi:cup-water";
   }
   render() {
-    var w, y, _;
+    var w, y, k;
     if (!this.config) {
-      this.root.innerHTML = `<style>${b}</style><div class="card"><div class="error">Настройте entity чайника в редакторе карточки.</div></div>`;
+      this.root.innerHTML = `<style>${f}</style><div class="card"><div class="error">Настройте entity чайника.</div></div>`;
       return;
     }
     const e = (w = this._hass) == null ? void 0 : w.states[this.config.entity];
     if (!e) {
-      this.root.innerHTML = `<style>${b}</style><div class="card"><div class="error">Entity <code>${n(this.config.entity)}</code> не найдена.</div></div>`;
+      this.root.innerHTML = `<style>${f}</style><div class="card"><div class="error">Entity <code>${o(this.config.entity)}</code> не найдена.</div></div>`;
       return;
     }
-    const t = e.attributes ?? {}, r = Number.isFinite(Number(t.current_temperature)) ? Number(t.current_temperature) : null, o = Number.isFinite(Number(t.temperature)) ? Number(t.temperature) : null, c = C(t.min_temp, 30), d = C(t.max_temp, 100), f = this.snapToStep(o ?? d, c, d), E = this.config.keep_warm_entity ? (_ = (y = this._hass) == null ? void 0 : y.states[this.config.keep_warm_entity]) == null ? void 0 : _.state : void 0, h = e.state !== "off" && e.state !== "unavailable", M = h ? "Включен" : "Выключен", S = this.config.keep_warm_entity ? `<button class="warm-row" data-action="toggle" aria-label="${n(this.config.keep_warm_name)}"><span class="warm-content"><span class="warm-icon"><ha-icon class="small-icon" icon="mdi:snowflake-thermometer"></ha-icon></span><span class="warm-label">${n(this.config.keep_warm_name)}</span></span><span class="toggle ${E === "on" ? "on" : ""}" aria-hidden="true"><span class="toggle-thumb"></span></span></button>` : "", T = this.sliderProgress(f, c, d), x = Array.isArray(t.operation_list) ? t.operation_list : [], k = String(t.operation_mode || "");
+    const t = e.attributes ?? {}, a = Number.isFinite(Number(t.current_temperature)) ? Number(t.current_temperature) : null, n = Number.isFinite(Number(t.temperature)) ? Number(t.temperature) : null, d = $(t.min_temp, 30), l = $(t.max_temp, 100), b = this.snapToStep(n ?? l, d, l), C = this.config.keep_warm_entity ? (k = (y = this._hass) == null ? void 0 : y.states[this.config.keep_warm_entity]) == null ? void 0 : k.state : void 0, h = e.state !== "off" && e.state !== "unavailable", E = this.sliderProgress(b, d, l), x = Array.isArray(t.operation_list) ? t.operation_list : [], S = String(t.operation_mode || "");
     let v = "";
     this.config.show_modes !== !1 && x.length > 0 && (v = `
         <div class="divider" aria-hidden="true"></div>
-        <div class="mode-selector-wrapper">
-          <select class="mode-selector" data-action="select-mode" aria-label="Режим нагрева">
-            <option value="" disabled ${k ? "" : "selected"}>Выберите режим...</option>
-            ${x.map((L) => {
-      const m = String(L);
-      return `<option value="${n(m)}" ${k === m ? "selected" : ""}>${n(m)}</option>`;
+        <section class="modes-section">
+          <button class="modes-toggle ${this._modesExpanded ? "open" : ""}" data-action="toggle-accordion" aria-expanded="${this._modesExpanded}">
+            <h3>Режимы</h3>
+            <ha-icon icon="mdi:chevron-down"></ha-icon>
+          </button>
+          <div class="modes-content ${this._modesExpanded ? "open" : ""}">
+            <div class="modes-grid">
+              ${x.map((T) => {
+      const m = String(T);
+      return `
+                  <button class="mode-btn ${S === m ? "active" : ""}" data-action="set-mode" data-mode="${o(m)}">
+                    <ha-icon icon="${this.getModeIcon(m)}"></ha-icon>
+                    <span>${o(m)}</span>
+                  </button>
+                `;
     }).join("")}
-          </select>
-          <ha-icon class="mode-selector-icon" icon="mdi:chevron-down"></ha-icon>
+            </div>
+          </div>
+        </section>
+      `);
+    const M = this.config.keep_warm_entity ? `
+      <div class="divider" aria-hidden="true"></div>
+      <button class="warm-row ${C === "on" ? "on" : ""}" data-action="toggle-warm">
+        <div class="warm-content">
+          <div class="warm-icon-box"><ha-icon icon="mdi:snowflake-thermometer"></ha-icon></div>
+          <span class="warm-label">${o(this.config.keep_warm_name)}</span>
         </div>
-      `), this.root.innerHTML = `<style>${b}</style><article class="card"><header class="header"><span class="icon-bubble"><ha-icon class="device-icon" icon="${$(this.config.icon, l.icon)}"></ha-icon></span><div class="info"><h2>${n(this.config.name)}</h2><p class="location">${n(this.config.location)}</p></div><button class="power-toggle ${h ? "on" : ""}" data-action="power" role="switch" aria-checked="${h}" aria-label="${h ? "Выключить" : "Включить"} чайник"><span class="power-toggle-label">${M}</span><span class="power-track" aria-hidden="true"><span class="power-thumb"></span></span></button></header><section class="temperatures"><div class="temperature"><span class="label">Текущая температура</span><strong class="value current">${p(r)}</strong></div><span class="temperature-divider" aria-hidden="true"></span><div class="temperature target"><span class="label">Целевая температура</span><strong class="value" data-role="target-value">${p(o)}</strong></div></section><section class="slider-section"><div class="slider-labels"><span>${p(c)}</span><span>${p(d)}</span></div><input aria-label="Целевая температура" data-action="temperature" type="range" min="${c}" max="${d}" step="${g}" value="${f}" style="--progress: ${T}%"></section>${v}${this.config.keep_warm_entity ? `<div class="divider" aria-hidden="true"></div>${S}` : ""}</article>`;
+        <div class="toggle"><div class="toggle-thumb"></div></div>
+      </button>
+    ` : "";
+    this.root.innerHTML = `
+      <style>${f}</style>
+      <article class="card">
+        <header class="header">
+          <div class="icon-bubble">
+            <ha-icon icon="${_(this.config.icon, c.icon)}"></ha-icon>
+          </div>
+          <div class="info">
+            <h2>${o(this.config.name)}</h2>
+            <p class="location">${o(this.config.location)}</p>
+          </div>
+          <button class="power-badge ${h ? "active" : ""}" data-action="power" role="switch" aria-checked="${h}">
+            ${h ? "ВКЛ" : "ВЫКЛ"}
+          </button>
+        </header>
+
+        <section class="temperatures">
+          <div class="temperature">
+            <span class="temp-label">Текущая температура</span>
+            <span class="temp-current">${p(a)}</span>
+          </div>
+          <div class="temp-divider" aria-hidden="true"></div>
+          <div class="temperature target">
+            <span class="temp-label">Целевая температура</span>
+            <span class="temp-target" data-role="target-value">${p(n)}</span>
+          </div>
+        </section>
+
+        <section class="slider-section">
+          <div class="slider-labels">
+            <span>${p(d)}</span>
+            <span>${p(l)}</span>
+          </div>
+          <input aria-label="Целевая температура" data-action="temperature" type="range" 
+                 min="${d}" max="${l}" step="${g}" value="${b}" 
+                 style="--progress: ${E}%">
+        </section>
+
+        ${v}
+        ${M}
+      </article>
+    `;
   }
 }
-class j extends HTMLElement {
+class H extends HTMLElement {
   constructor() {
     super();
     s(this, "config", {});
@@ -265,23 +389,37 @@ class j extends HTMLElement {
   set hass(e) {
   }
   emit(e) {
-    this.config = { ...this.config, ...e }, I(this, this.config);
+    this.config = { ...this.config, ...e }, F(this, this.config);
   }
   handleChange(e) {
-    const t = e.target, r = t.dataset.key;
-    r && (t instanceof HTMLInputElement && t.type === "checkbox" ? this.emit({ [r]: t.checked }) : this.emit({ [r]: t.value }));
+    const t = e.target, a = t.dataset.key;
+    a && this.emit({ [a]: t.type === "checkbox" ? t.checked : t.value });
   }
   render() {
-    this.root.innerHTML = `<style>${F}</style><div class="form"><label>Entity чайника *<input data-key="entity" placeholder="water_heater.kettle" value="${n(this.config.entity ?? "")}"></label><span class="help">Укажите точный entity_id из Settings → Devices & services → Entities.</span><label>Название<input data-key="name" value="${n(this.config.name ?? l.name)}"></label><label>Расположение<input data-key="location" value="${n(this.config.location ?? l.location)}"></label><label>Иконка<input data-key="icon" value="${n(this.config.icon ?? l.icon)}"></label><label class="checkbox"><input data-key="show_modes" type="checkbox" ${this.config.show_modes !== !1 ? "checked" : ""}>Показывать выпадающий список режимов</label><span class="help">Режимы загружаются автоматически из атрибута operation_list.</span><label>Режим включения<input data-key="power_on_mode" value="${n(this.config.power_on_mode ?? "on")}"></label><label>Режим выключения<input data-key="power_off_mode" value="${n(this.config.power_off_mode ?? "off")}"></label><span class="help">Значения должны входить в attributes.operation_list у water_heater entity.</span><label>Entity поддержания тепла<input data-key="keep_warm_entity" placeholder="switch.kettle_keep_warm" value="${n(this.config.keep_warm_entity ?? "")}"></label><label>Название поддержания тепла<input data-key="keep_warm_name" value="${n(this.config.keep_warm_name ?? l.keep_warm_name)}"></label></div>`;
+    this.root.innerHTML = `
+      <style>${z}</style>
+      <div class="form">
+        <label>Entity чайника *<input data-key="entity" placeholder="water_heater.kettle" value="${o(this.config.entity ?? "")}"></label>
+        <label>Название<input data-key="name" value="${o(this.config.name ?? c.name)}"></label>
+        <label>Расположение<input data-key="location" value="${o(this.config.location ?? c.location)}"></label>
+        <label>Иконка<input data-key="icon" value="${o(this.config.icon ?? c.icon)}"></label>
+        <label class="checkbox">
+          <input data-key="show_modes" type="checkbox" ${this.config.show_modes !== !1 ? "checked" : ""}>
+          Показывать сетку режимов
+        </label>
+        <label>Entity поддержания тепла<input data-key="keep_warm_entity" placeholder="switch.kettle_keep_warm" value="${o(this.config.keep_warm_entity ?? "")}"></label>
+        <label>Название поддержания тепла<input data-key="keep_warm_name" value="${o(this.config.keep_warm_name ?? c.keep_warm_name)}"></label>
+      </div>
+    `;
   }
 }
-customElements.get("stitch-mint-teal-kettle-card") || customElements.define("stitch-mint-teal-kettle-card", H);
-customElements.get("stitch-mint-teal-kettle-card-editor") || customElements.define("stitch-mint-teal-kettle-card-editor", j);
+customElements.get("stitch-mint-teal-kettle-card") || customElements.define("stitch-mint-teal-kettle-card", I);
+customElements.get("stitch-mint-teal-kettle-card-editor") || customElements.define("stitch-mint-teal-kettle-card-editor", H);
 const u = window;
 u.customCards = u.customCards ?? [];
-u.customCards.some((a) => a.type === "custom:stitch-mint-teal-kettle-card") || u.customCards.push({
+u.customCards.some((r) => r.type === "custom:stitch-mint-teal-kettle-card") || u.customCards.push({
   type: "custom:stitch-mint-teal-kettle-card",
   name: "Mint Teal — Чайник",
-  description: "Карточка управления чайником water_heater в стиле Mint Teal.",
+  description: "Карточка управления чайником water_heater в новом стиле Lumina Home.",
   preview: !0
 });
