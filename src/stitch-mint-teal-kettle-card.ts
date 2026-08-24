@@ -134,6 +134,11 @@ button { font: inherit; }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--kettle-primary); outline-offset: 2px; }
 .error { padding: 12px; border-radius: 10px; color: var(--error-color, #ba1a1a); background: var(--error-background-color, #ffdad6); font-size: 13px; }
 @media (max-width: 340px) { .card { padding: 12px; gap: 16px; } .modes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.modes-dropdown { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.modes-toggle { width: 100%; padding: 12px; display: flex; align-items: center; justify-content: space-between; text-align: left; border: 0; border-radius: 12px; color: var(--kettle-text); background: var(--kettle-container); cursor: pointer; transition: background .15s ease, transform .1s ease; }
+.modes-toggle:active { transform: scale(.98); }
+.modes-toggle-label { font-size: 14px; line-height: 20px; font-weight: 500; }
 `;
 
 const EDITOR_STYLE = `
@@ -208,6 +213,7 @@ class StitchMintTealKettleCard extends HTMLElement {
   private boundClick: (event: Event) => void;
   private boundInput: (event: Event) => void;
   private boundChange: (event: Event) => void;
+  private modesExpanded: boolean = false;
 
   constructor() {
     super();
@@ -284,6 +290,13 @@ class StitchMintTealKettleCard extends HTMLElement {
     const button = target.closest<HTMLElement>('[data-action]');
     if (!button || !this.config) return;
     const action = button.dataset.action;
+
+    if (action === 'toggle-modes') {
+      this.modesExpanded = !this.modesExpanded;
+      this.render();
+      return;
+    }
+
     if (action === 'toggle') {
       void this.toggleKeepWarm();
     } else if (action === 'mode' && button.dataset.value) {
@@ -330,6 +343,7 @@ class StitchMintTealKettleCard extends HTMLElement {
       this.root.innerHTML = `<style>${STYLE}</style><div class="card"><div class="error">Entity <code>${escapeHtml(this.config.entity)}</code> не найдена.</div></div>`;
       return;
     }
+    
     const attributes = state.attributes ?? {};
     const current = Number.isFinite(Number(attributes.current_temperature)) ? Number(attributes.current_temperature) : null;
     const target = Number.isFinite(Number(attributes.temperature)) ? Number(attributes.temperature) : null;
@@ -341,7 +355,33 @@ class StitchMintTealKettleCard extends HTMLElement {
     const powerLabel = active ? 'Включен' : 'Выключен';
     const warmMarkup = this.config.keep_warm_entity ? `<button class="warm-row" data-action="toggle" aria-label="${escapeHtml(this.config.keep_warm_name)}"><span class="warm-content"><span class="warm-icon"><ha-icon class="small-icon" icon="mdi:snowflake-thermometer"></ha-icon></span><span class="warm-label">${escapeHtml(this.config.keep_warm_name)}</span></span><span class="toggle ${warmState === 'on' ? 'on' : ''}" aria-hidden="true"><span class="toggle-thumb"></span></span></button>` : '';
     const progress = this.sliderProgress(sliderValue, min, max);
-    this.root.innerHTML = `<style>${STYLE}</style><article class="card"><header class="header"><span class="icon-bubble"><ha-icon class="device-icon" icon="${safeIcon(this.config.icon, DEFAULTS.icon)}"></ha-icon></span><div class="info"><h2>${escapeHtml(this.config.name)}</h2><p class="location">${escapeHtml(this.config.location)}</p></div><button class="power-toggle ${active ? 'on' : ''}" data-action="power" role="switch" aria-checked="${active}" aria-label="${active ? 'Выключить' : 'Включить'} чайник"><span class="power-toggle-label">${powerLabel}</span><span class="power-track" aria-hidden="true"><span class="power-thumb"></span></span></button></header><section class="temperatures"><div class="temperature"><span class="label">Текущая температура</span><strong class="value current">${formatTemperature(current)}</strong></div><span class="temperature-divider" aria-hidden="true"></span><div class="temperature target"><span class="label">Целевая температура</span><strong class="value" data-role="target-value">${formatTemperature(target)}</strong></div></section><section class="slider-section"><div class="slider-labels"><span>${formatTemperature(min)}</span><span>${formatTemperature(max)}</span></div><input aria-label="Целевая температура" data-action="temperature" type="range" min="${min}" max="${max}" step="${TEMPERATURE_STEP}" value="${sliderValue}" style="--progress: ${progress}%"></section><div class="divider" aria-hidden="true"></div>${warmMarkup}</article>`;
+
+    const currentMode = state.attributes.operation_mode;
+
+    let modesMarkup = '';
+    if (this.config.show_modes !== false && this.config.modes && this.config.modes.length > 0) {
+      modesMarkup = `
+        <div class="divider" aria-hidden="true"></div>
+        <div class="modes-dropdown">
+          <button class="modes-toggle" data-action="toggle-modes" aria-expanded="${this.modesExpanded}">
+            <span class="modes-toggle-label">Режимы нагрева</span>
+            <ha-icon icon="${this.modesExpanded ? 'mdi:chevron-up' : 'mdi:chevron-down'}"></ha-icon>
+          </button>
+          ${this.modesExpanded ? `
+            <div class="modes">
+              ${this.config.modes.map(mode => `
+                <button class="mode ${currentMode === mode.value ? 'selected' : ''}" data-action="mode" data-value="${escapeHtml(mode.value)}">
+                  <ha-icon class="mode-icon" icon="${escapeHtml(mode.icon)}"></ha-icon>
+                  <span class="mode-label">${escapeHtml(mode.label)}</span>
+                </button>
+              `).join('')}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    this.root.innerHTML = `<style>${STYLE}</style><article class="card"><header class="header"><span class="icon-bubble"><ha-icon class="device-icon" icon="${safeIcon(this.config.icon, DEFAULTS.icon)}"></ha-icon></span><div class="info"><h2>${escapeHtml(this.config.name)}</h2><p class="location">${escapeHtml(this.config.location)}</p></div><button class="power-toggle ${active ? 'on' : ''}" data-action="power" role="switch" aria-checked="${active}" aria-label="${active ? 'Выключить' : 'Включить'} чайник"><span class="power-toggle-label">${powerLabel}</span><span class="power-track" aria-hidden="true"><span class="power-thumb"></span></span></button></header><section class="temperatures"><div class="temperature"><span class="label">Текущая температура</span><strong class="value current">${formatTemperature(current)}</strong></div><span class="temperature-divider" aria-hidden="true"></span><div class="temperature target"><span class="label">Целевая температура</span><strong class="value" data-role="target-value">${formatTemperature(target)}</strong></div></section><section class="slider-section"><div class="slider-labels"><span>${formatTemperature(min)}</span><span>${formatTemperature(max)}</span></div><input aria-label="Целевая температура" data-action="temperature" type="range" min="${min}" max="${max}" step="${TEMPERATURE_STEP}" value="${sliderValue}" style="--progress: ${progress}%"></section>${modesMarkup}${this.config.keep_warm_entity ? `<div class="divider" aria-hidden="true"></div>${warmMarkup}` : ''}</article>`;
   }
 }
 
