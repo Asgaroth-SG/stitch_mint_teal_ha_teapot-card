@@ -1,7 +1,7 @@
-var M = Object.defineProperty;
-var L = (i, r, e) => r in i ? M(i, r, { enumerable: !0, configurable: !0, writable: !0, value: e }) : i[r] = e;
-var l = (i, r, e) => L(i, typeof r != "symbol" ? r + "" : r, e);
-const S = [
+var z = Object.defineProperty;
+var T = (r, i, e) => i in r ? z(r, i, { enumerable: !0, configurable: !0, writable: !0, value: e }) : r[i] = e;
+var l = (r, i, e) => T(r, typeof i != "symbol" ? i + "" : i, e);
+const N = [
   { label: "Белый чай", value: "white_tea", icon: "mdi:tea" },
   { label: "Зелёный чай", value: "green_tea", icon: "mdi:tea" },
   { label: "Красный чай", value: "red_tea", icon: "mdi:tea" },
@@ -16,7 +16,7 @@ const S = [
   icon: "mdi:kettle-steam",
   show_modes: !0,
   keep_warm_name: "Поддержание тепла"
-}, f = 5, x = `
+}, x = 5, v = `
 :host {
   display: block;
   color: var(--primary-text-color, #0f1e1c);
@@ -104,7 +104,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--kettle-prim
 .modes-toggle { width: 100%; padding: 12px; display: flex; align-items: center; justify-content: space-between; text-align: left; border: 0; border-radius: 12px; color: var(--kettle-text); background: var(--kettle-container); cursor: pointer; transition: background .15s ease, transform .1s ease; }
 .modes-toggle:active { transform: scale(.98); }
 .modes-toggle-label { font-size: 14px; line-height: 20px; font-weight: 500; }
-`, T = `
+`, F = `
 :host { display: block; font-family: var(--paper-font-body1_-_font-family, sans-serif); color: var(--primary-text-color, #0f1e1c); }
 * { box-sizing: border-box; }
 .form { display: grid; gap: 14px; padding: 4px 0; }
@@ -121,31 +121,31 @@ button.secondary { color: var(--primary-text-color, #0f1e1c); background: var(--
 .help { color: var(--secondary-text-color, #6d7a77); font-size: 12px; line-height: 16px; }
 @media (max-width: 520px) { .mode-row { grid-template-columns: 1fr 1fr; } }
 `;
-function o(i) {
-  return String(i ?? "").replace(/[&<>'"]/g, (r) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[r] ?? r);
+function n(r) {
+  return String(r ?? "").replace(/[&<>'"]/g, (i) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[i] ?? i);
 }
-function k(i, r) {
-  const e = typeof i == "string" ? i.trim() : "";
-  return /^(mdi|hass):[a-z0-9-]+$/i.test(e) ? e : r;
+function k(r, i) {
+  const e = typeof r == "string" ? r.trim() : "";
+  return /^(mdi|hass):[a-z0-9-]+$/i.test(e) ? e : i;
 }
-function _(i, r) {
-  const e = typeof i == "number" ? i : Number(i);
-  return Number.isFinite(e) ? e : r;
+function C(r, i) {
+  const e = typeof r == "number" ? r : Number(r);
+  return Number.isFinite(e) ? e : i;
 }
-function p(i) {
-  return Array.isArray(i) ? i.filter((r) => typeof r == "object" && r !== null).map((r) => ({
-    label: typeof r.label == "string" && r.label.trim() ? r.label.trim() : "Режим",
-    value: typeof r.value == "string" && r.value.trim() ? r.value.trim() : "",
-    icon: k(r.icon, "mdi:tea")
-  })).filter((r) => r.value) : S;
+function p(r) {
+  return Array.isArray(r) ? r.filter((i) => typeof i == "object" && i !== null).map((i) => ({
+    label: typeof i.label == "string" && i.label.trim() ? i.label.trim() : "Режим",
+    value: typeof i.value == "string" && i.value.trim() ? i.value.trim() : "",
+    icon: k(i.icon, "mdi:tea")
+  })).filter((i) => i.value) : N;
 }
-function m(i) {
-  return i === null ? "—" : `${Math.round(i)}°C`;
+function u(r) {
+  return r === null ? "—" : `${Math.round(r)}°C`;
 }
-function z(i, r) {
-  i.dispatchEvent(new CustomEvent("config-changed", { bubbles: !0, composed: !0, detail: { config: r } }));
+function j(r, i) {
+  r.dispatchEvent(new CustomEvent("config-changed", { bubbles: !0, composed: !0, detail: { config: i } }));
 }
-class N extends HTMLElement {
+class I extends HTMLElement {
   constructor() {
     super();
     l(this, "config", null);
@@ -154,7 +154,7 @@ class N extends HTMLElement {
     l(this, "boundClick");
     l(this, "boundInput");
     l(this, "boundChange");
-    l(this, "modesExpanded", false);
+    l(this, "modesExpanded", !1);
     this.root = this.attachShadow({ mode: "open" }), this.boundClick = (e) => this.handleClick(e), this.boundInput = (e) => this.handleInput(e), this.boundChange = (e) => this.handleChange(e);
   }
   static getStubConfig() {
@@ -200,8 +200,8 @@ class N extends HTMLElement {
     const a = Number(t.value);
     if (!Number.isFinite(a)) return;
     t.style.setProperty("--progress", `${this.sliderProgress(a, Number(t.min), Number(t.max))}%`);
-    const n = this.root.querySelector('[data-role="target-value"]');
-    n && (n.textContent = m(a));
+    const o = this.root.querySelector('[data-role="target-value"]');
+    o && (o.textContent = u(a));
   }
   handleChange(e) {
     const t = e.target;
@@ -212,19 +212,16 @@ class N extends HTMLElement {
   handleClick(e) {
     const a = e.target.closest("[data-action]");
     if (!a || !this.config) return;
-    const n = a.dataset.action;
-    
-    if (n === "toggle-modes") {
-      this.modesExpanded = !this.modesExpanded;
-      this.render();
+    const o = a.dataset.action;
+    if (o === "toggle-modes") {
+      this.modesExpanded = !this.modesExpanded, this.render();
       return;
     }
-    
-    if (n === "toggle")
+    if (o === "toggle")
       this.toggleKeepWarm();
-    else if (n === "mode" && a.dataset.value)
+    else if (o === "mode" && a.dataset.value)
       this.call("set_operation_mode", { operation_mode: a.dataset.value });
-    else if (n === "power") {
+    else if (o === "power") {
       const s = this.currentState() === "off" ? this.config.power_on_mode ?? "on" : this.config.power_off_mode ?? "off";
       this.call("set_operation_mode", { operation_mode: s });
     }
@@ -246,51 +243,44 @@ class N extends HTMLElement {
   }
   snapToStep(e, t, a) {
     if (!Number.isFinite(e) || !Number.isFinite(t) || !Number.isFinite(a) || a <= t) return a;
-    const n = t + Math.round((e - t) / f) * f;
-    return Math.max(t, Math.min(a, n));
+    const o = t + Math.round((e - t) / x) * x;
+    return Math.max(t, Math.min(a, o));
   }
   render() {
-    var v, y, w;
+    var w, _, $;
     if (!this.config) {
-      this.root.innerHTML = \`<style>\${x}</style><div class="card"><div class="error">Настройте entity чайника в редакторе карточки.</div></div>\`;
+      this.root.innerHTML = `<style>${v}</style><div class="card"><div class="error">Настройте entity чайника в редакторе карточки.</div></div>`;
       return;
     }
-    const e = (v = this._hass) == null ? void 0 : v.states[this.config.entity];
+    const e = (w = this._hass) == null ? void 0 : w.states[this.config.entity];
     if (!e) {
-      this.root.innerHTML = \`<style>\${x}</style><div class="card"><div class="error">Entity <code>\${o(this.config.entity)}</code> не найдена.</div></div>\`;
+      this.root.innerHTML = `<style>${v}</style><div class="card"><div class="error">Entity <code>${n(this.config.entity)}</code> не найдена.</div></div>`;
       return;
     }
-    const t = e.attributes ?? {}, a = Number.isFinite(Number(t.current_temperature)) ? Number(t.current_temperature) : null, n = Number.isFinite(Number(t.temperature)) ? Number(t.temperature) : null, s = _(t.min_temp, 30), d = _(t.max_temp, 100), u = this.snapToStep(n ?? d, s, d), b = this.config.keep_warm_entity ? (w = (y = this._hass) == null ? void 0 : y.states[this.config.keep_warm_entity]) == null ? void 0 : w.state : void 0, h = e.state !== "off" && e.state !== "unavailable", C = h ? "Включен" : "Выключен", $ = this.config.keep_warm_entity ? \`<button class="warm-row" data-action="toggle" aria-label="\${o(this.config.keep_warm_name)}"><span class="warm-content"><span class="warm-icon"><ha-icon class="small-icon" icon="mdi:snowflake-thermometer"></ha-icon></span><span class="warm-label">\${o(this.config.keep_warm_name)}</span></span><span class="toggle \${b === "on" ? "on" : ""}" aria-hidden="true"><span class="toggle-thumb"></span></span></button>\` : "", E = this.sliderProgress(u, s, d);
-    
-    const currentMode = t.operation_mode;
-    let modesMarkup = '';
-    
-    if (this.config.show_modes !== false && this.config.modes && this.config.modes.length > 0) {
-      modesMarkup = \`
+    const t = e.attributes ?? {}, a = Number.isFinite(Number(t.current_temperature)) ? Number(t.current_temperature) : null, o = Number.isFinite(Number(t.temperature)) ? Number(t.temperature) : null, s = C(t.min_temp, 30), d = C(t.max_temp, 100), m = this.snapToStep(o ?? d, s, d), f = this.config.keep_warm_entity ? ($ = (_ = this._hass) == null ? void 0 : _.states[this.config.keep_warm_entity]) == null ? void 0 : $.state : void 0, h = e.state !== "off" && e.state !== "unavailable", E = h ? "Включен" : "Выключен", M = this.config.keep_warm_entity ? `<button class="warm-row" data-action="toggle" aria-label="${n(this.config.keep_warm_name)}"><span class="warm-content"><span class="warm-icon"><ha-icon class="small-icon" icon="mdi:snowflake-thermometer"></ha-icon></span><span class="warm-label">${n(this.config.keep_warm_name)}</span></span><span class="toggle ${f === "on" ? "on" : ""}" aria-hidden="true"><span class="toggle-thumb"></span></span></button>` : "", L = this.sliderProgress(m, s, d), S = e.attributes.operation_mode;
+    let y = "";
+    this.config.show_modes !== !1 && this.config.modes && this.config.modes.length > 0 && (y = `
         <div class="divider" aria-hidden="true"></div>
         <div class="modes-dropdown">
-          <button class="modes-toggle" data-action="toggle-modes" aria-expanded="\${this.modesExpanded}">
+          <button class="modes-toggle" data-action="toggle-modes" aria-expanded="${this.modesExpanded}">
             <span class="modes-toggle-label">Режимы нагрева</span>
-            <ha-icon icon="\${this.modesExpanded ? 'mdi:chevron-up' : 'mdi:chevron-down'}"></ha-icon>
+            <ha-icon icon="${this.modesExpanded ? "mdi:chevron-up" : "mdi:chevron-down"}"></ha-icon>
           </button>
-          \${this.modesExpanded ? \`
+          ${this.modesExpanded ? `
             <div class="modes">
-              \${this.config.modes.map(mode => \`
-                <button class="mode \${currentMode === mode.value ? 'selected' : ''}" data-action="mode" data-value="\${o(mode.value)}">
-                  <ha-icon class="mode-icon" icon="\${o(mode.icon)}"></ha-icon>
-                  <span class="mode-label">\${o(mode.label)}</span>
+              ${this.config.modes.map((g) => `
+                <button class="mode ${S === g.value ? "selected" : ""}" data-action="mode" data-value="${n(g.value)}">
+                  <ha-icon class="mode-icon" icon="${n(g.icon)}"></ha-icon>
+                  <span class="mode-label">${n(g.label)}</span>
                 </button>
-              \`).join('')}
+              `).join("")}
             </div>
-          \` : ''}
+          ` : ""}
         </div>
-      \`;
-    }
-    
-    this.root.innerHTML = \`<style>\${x}</style><article class="card"><header class="header"><span class="icon-bubble"><ha-icon class="device-icon" icon="\${k(this.config.icon, c.icon)}"></ha-icon></span><div class="info"><h2>\${o(this.config.name)}</h2><p class="location">\${o(this.config.location)}</p></div><button class="power-toggle \${h ? "on" : ""}" data-action="power" role="switch" aria-checked="\${h}" aria-label="\${h ? "Выключить" : "Включить"} чайник"><span class="power-toggle-label">\${C}</span><span class="power-track" aria-hidden="true"><span class="power-thumb"></span></span></button></header><section class="temperatures"><div class="temperature"><span class="label">Текущая температура</span><strong class="value current">\${m(a)}</strong></div><span class="temperature-divider" aria-hidden="true"></span><div class="temperature target"><span class="label">Целевая температура</span><strong class="value" data-role="target-value">\${m(n)}</strong></div></section><section class="slider-section"><div class="slider-labels"><span>\${m(s)}</span><span>\${m(d)}</span></div><input aria-label="Целевая температура" data-action="temperature" type="range" min="\${s}" max="\${d}" step="\${f}" value="\${u}" style="--progress: \${E}%"></section>\${modesMarkup}\${this.config.keep_warm_entity ? \`<div class="divider" aria-hidden="true"></div>\${$}\` : ''}</article>\`;
+      `), this.root.innerHTML = `<style>${v}</style><article class="card"><header class="header"><span class="icon-bubble"><ha-icon class="device-icon" icon="${k(this.config.icon, c.icon)}"></ha-icon></span><div class="info"><h2>${n(this.config.name)}</h2><p class="location">${n(this.config.location)}</p></div><button class="power-toggle ${h ? "on" : ""}" data-action="power" role="switch" aria-checked="${h}" aria-label="${h ? "Выключить" : "Включить"} чайник"><span class="power-toggle-label">${E}</span><span class="power-track" aria-hidden="true"><span class="power-thumb"></span></span></button></header><section class="temperatures"><div class="temperature"><span class="label">Текущая температура</span><strong class="value current">${u(a)}</strong></div><span class="temperature-divider" aria-hidden="true"></span><div class="temperature target"><span class="label">Целевая температура</span><strong class="value" data-role="target-value">${u(o)}</strong></div></section><section class="slider-section"><div class="slider-labels"><span>${u(s)}</span><span>${u(d)}</span></div><input aria-label="Целевая температура" data-action="temperature" type="range" min="${s}" max="${d}" step="${x}" value="${m}" style="--progress: ${L}%"></section>${y}${this.config.keep_warm_entity ? `<div class="divider" aria-hidden="true"></div>${M}` : ""}</article>`;
   }
 }
-class F extends HTMLElement {
+class A extends HTMLElement {
   constructor() {
     super();
     l(this, "config", {});
@@ -311,38 +301,38 @@ class F extends HTMLElement {
   set hass(e) {
   }
   emit(e) {
-    this.config = { ...this.config, ...e }, z(this, this.config);
+    this.config = { ...this.config, ...e }, j(this, this.config);
   }
   handleChange(e) {
     const t = e.target, a = t.dataset.key;
     a && (t instanceof HTMLInputElement && t.type === "checkbox" ? this.emit({ [a]: t.checked }) : this.emit({ [a]: t.value }));
   }
   handleClick(e) {
-    var n;
-    const a = (n = e.target.closest("[data-editor-action]")) == null ? void 0 : n.dataset.editorAction;
+    var o;
+    const a = (o = e.target.closest("[data-editor-action]")) == null ? void 0 : o.dataset.editorAction;
     if (a === "add-mode") {
       const s = p(this.config.modes);
-      this.emit({ modes: [...s, { label: "Новый режим", value: \`mode_\${s.length + 1}\`, icon: "mdi:tea" }] }), this.render();
+      this.emit({ modes: [...s, { label: "Новый режим", value: `mode_${s.length + 1}`, icon: "mdi:tea" }] }), this.render();
     }
     if (a != null && a.startsWith("delete-mode-")) {
-      const s = Number(a.slice(12)), d = p(this.config.modes).filter((u, b) => b !== s);
+      const s = Number(a.slice(12)), d = p(this.config.modes).filter((m, f) => f !== s);
       this.emit({ modes: d }), this.render();
     }
   }
   render() {
-    const t = p(this.config.modes).map((a, n) => \`<div class="mode-row"><label>Название<input data-mode-index="\${n}" data-mode-key="label" value="\${o(a.label)}"></label><label>Значение<input data-mode-index="\${n}" data-mode-key="value" value="\${o(a.value)}"></label><label>Иконка<input data-mode-index="\${n}" data-mode-key="icon" value="\${o(a.icon ?? "mdi:tea")}"></label><button class="secondary" type="button" data-editor-action="delete-mode-\${n}" aria-label="Удалить режим">Удалить</button></div>\`).join("");
-    this.root.innerHTML = \`<style>\${T}</style><div class="form"><label>Entity чайника *<input data-key="entity" placeholder="water_heater.kettle" value="\${o(this.config.entity ?? "")}"></label><span class="help">Укажите точный entity_id из Settings → Devices & services → Entities.</span><label>Название<input data-key="name" value="\${o(this.config.name ?? c.name)}"></label><label>Расположение<input data-key="location" value="\${o(this.config.location ?? c.location)}"></label><label>Иконка<input data-key="icon" value="\${o(this.config.icon ?? c.icon)}"></label><label class="checkbox"><input data-key="show_modes" type="checkbox" \${this.config.show_modes !== !1 ? "checked" : ""}>Показывать режимы чая</label><label>Режим включения<input data-key="power_on_mode" value="\${o(this.config.power_on_mode ?? "on")}"></label><label>Режим выключения<input data-key="power_off_mode" value="\${o(this.config.power_off_mode ?? "off")}"></label><span class="help">Значения должны входить в attributes.operation_list у water_heater entity.</span><label>Entity поддержания тепла<input data-key="keep_warm_entity" placeholder="switch.kettle_keep_warm" value="\${o(this.config.keep_warm_entity ?? "")}"></label><label>Название поддержания тепла<input data-key="keep_warm_name" value="\${o(this.config.keep_warm_name ?? c.keep_warm_name)}"></label><fieldset><legend>Режимы чая</legend>\${t || '<span class="help">Режимы отключены или не заданы.</span>'}<button type="button" data-editor-action="add-mode">Добавить режим</button></fieldset></div>\`, this.root.querySelectorAll("[data-mode-index]").forEach((a) => a.addEventListener("change", (n) => this.handleModeChange(n)));
+    const t = p(this.config.modes).map((a, o) => `<div class="mode-row"><label>Название<input data-mode-index="${o}" data-mode-key="label" value="${n(a.label)}"></label><label>Значение<input data-mode-index="${o}" data-mode-key="value" value="${n(a.value)}"></label><label>Иконка<input data-mode-index="${o}" data-mode-key="icon" value="${n(a.icon ?? "mdi:tea")}"></label><button class="secondary" type="button" data-editor-action="delete-mode-${o}" aria-label="Удалить режим">Удалить</button></div>`).join("");
+    this.root.innerHTML = `<style>${F}</style><div class="form"><label>Entity чайника *<input data-key="entity" placeholder="water_heater.kettle" value="${n(this.config.entity ?? "")}"></label><span class="help">Укажите точный entity_id из Settings → Devices & services → Entities.</span><label>Название<input data-key="name" value="${n(this.config.name ?? c.name)}"></label><label>Расположение<input data-key="location" value="${n(this.config.location ?? c.location)}"></label><label>Иконка<input data-key="icon" value="${n(this.config.icon ?? c.icon)}"></label><label class="checkbox"><input data-key="show_modes" type="checkbox" ${this.config.show_modes !== !1 ? "checked" : ""}>Показывать режимы чая</label><label>Режим включения<input data-key="power_on_mode" value="${n(this.config.power_on_mode ?? "on")}"></label><label>Режим выключения<input data-key="power_off_mode" value="${n(this.config.power_off_mode ?? "off")}"></label><span class="help">Значения должны входить в attributes.operation_list у water_heater entity.</span><label>Entity поддержания тепла<input data-key="keep_warm_entity" placeholder="switch.kettle_keep_warm" value="${n(this.config.keep_warm_entity ?? "")}"></label><label>Название поддержания тепла<input data-key="keep_warm_name" value="${n(this.config.keep_warm_name ?? c.keep_warm_name)}"></label><fieldset><legend>Режимы чая</legend>${t || '<span class="help">Режимы отключены или не заданы.</span>'}<button type="button" data-editor-action="add-mode">Добавить режим</button></fieldset></div>`, this.root.querySelectorAll("[data-mode-index]").forEach((a) => a.addEventListener("change", (o) => this.handleModeChange(o)));
   }
   handleModeChange(e) {
-    const t = e.target, a = Number(t.dataset.modeIndex), n = t.dataset.modeKey, s = p(this.config.modes).map((d, u) => u === a ? { ...d, [n]: t.value } : d);
+    const t = e.target, a = Number(t.dataset.modeIndex), o = t.dataset.modeKey, s = p(this.config.modes).map((d, m) => m === a ? { ...d, [o]: t.value } : d);
     this.emit({ modes: s });
   }
 }
-customElements.get("stitch-mint-teal-kettle-card") || customElements.define("stitch-mint-teal-kettle-card", N);
-customElements.get("stitch-mint-teal-kettle-card-editor") || customElements.define("stitch-mint-teal-kettle-card-editor", F);
-const g = window;
-g.customCards = g.customCards ?? [];
-g.customCards.some((i) => i.type === "custom:stitch-mint-teal-kettle-card") || g.customCards.push({
+customElements.get("stitch-mint-teal-kettle-card") || customElements.define("stitch-mint-teal-kettle-card", I);
+customElements.get("stitch-mint-teal-kettle-card-editor") || customElements.define("stitch-mint-teal-kettle-card-editor", A);
+const b = window;
+b.customCards = b.customCards ?? [];
+b.customCards.some((r) => r.type === "custom:stitch-mint-teal-kettle-card") || b.customCards.push({
   type: "custom:stitch-mint-teal-kettle-card",
   name: "Mint Teal — Чайник",
   description: "Карточка управления чайником water_heater в стиле Mint Teal.",
