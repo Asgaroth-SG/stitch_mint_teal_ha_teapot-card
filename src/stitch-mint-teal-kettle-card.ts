@@ -19,6 +19,7 @@ type KettleConfig = {
   keep_warm_name?: string;
   power_on_mode?: string;
   power_off_mode?: string;
+  theme?: Record<string, string>;
 };
 
 type EditorConfig = Partial<KettleConfig> & { entity?: string };
@@ -33,7 +34,7 @@ const DEFAULTS: Required<Pick<KettleConfig, 'name' | 'location' | 'icon' | 'show
 
 const TEMPERATURE_STEP = 5;
 
-// Словарь для перевода режимов на русский язык
+// Обновленный словарь для перевода режимов на русский язык
 const MODE_TRANSLATIONS: Record<string, string> = {
   'boil': 'Кипячение',
   'warm': 'Поддержание',
@@ -51,13 +52,13 @@ const MODE_TRANSLATIONS: Record<string, string> = {
 
 function translateMode(mode: string): string {
   const lower = String(mode).toLowerCase().trim();
-  return MODE_TRANSLATIONS[lower] || mode; // Если перевода нет, вернет оригинальное название
+  return MODE_TRANSLATIONS[lower] || mode; 
 }
 
 const STYLE = `
 :host {
   display: block;
-  /* Mint Teal System Colors */
+  /* Mint Teal System Colors Default */
   --mt-surface: #ecfdf9;
   --mt-surface-dim: #ccdeda;
   --mt-surface-container: #e0f2ee;
@@ -71,6 +72,8 @@ const STYLE = `
   --mt-primary: #00685d;
   --mt-on-primary: #ffffff;
   --mt-tertiary: #4f5f5f;
+  --mt-border: rgba(0, 137, 123, 0.15);
+  --mt-shadow: 0px 2px 8px rgba(0, 137, 123, 0.08);
   
   font-family: "Work Sans", system-ui, sans-serif;
   color: var(--mt-on-surface);
@@ -83,12 +86,13 @@ const STYLE = `
   padding: 16px;
   background: var(--mt-surface);
   border-radius: 16px;
-  border: 1px solid rgba(0, 137, 123, 0.15);
-  box-shadow: 0px 2px 8px rgba(0, 137, 123, 0.08);
+  border: 1px solid var(--mt-border);
+  box-shadow: var(--mt-shadow);
   display: flex;
   flex-direction: column;
   gap: 24px;
   transition: box-shadow 0.3s ease;
+  backdrop-filter: blur(8px);
 }
 .card:hover {
   box-shadow: 0px 8px 16px rgba(0, 137, 123, 0.12);
@@ -98,17 +102,17 @@ const STYLE = `
 .header { display: flex; align-items: center; gap: 16px; min-width: 0; }
 .icon-bubble { 
   display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; 
-  width: 56px; height: 56px; border-radius: 50%; 
-  background: var(--mt-surface-variant); color: var(--mt-tertiary); transition: background .3s;
+  width: 48px; height: 48px; border-radius: 50%; 
+  background: var(--mt-surface-variant); color: var(--mt-primary); transition: background .3s;
 }
-.icon-bubble ha-icon { --mdc-icon-size: 28px; }
+.icon-bubble ha-icon { --mdc-icon-size: 24px; }
 .info { min-width: 0; flex: 1; }
 h2, p { margin: 0; }
-h2 { font: 600 20px/28px "Manrope", system-ui, sans-serif; color: var(--mt-on-surface); letter-spacing: -0.01em; }
-.location { font-size: 12px; font-weight: 500; line-height: 16px; color: var(--mt-outline); margin-top: 2px; }
+h2 { font: 600 16px/24px "Manrope", system-ui, sans-serif; color: var(--mt-on-surface); letter-spacing: -0.01em; }
+.location { font-size: 11px; font-weight: 500; line-height: 14px; color: var(--mt-outline); margin-top: 2px; }
 .power-badge { 
   flex: 0 0 auto; padding: 4px 12px; border: 0; border-radius: 999px; cursor: pointer;
-  font: 500 12px/16px "Work Sans", sans-serif; 
+  font: 500 11px/16px "Work Sans", sans-serif; 
   color: var(--mt-on-surface-variant); background: var(--mt-surface-container-high); 
   transition: all 0.2s ease;
 }
@@ -122,22 +126,22 @@ h2 { font: 600 20px/28px "Manrope", system-ui, sans-serif; color: var(--mt-on-su
 }
 .temperature { display: flex; flex-direction: column; gap: 2px; }
 .temperature.target { align-items: flex-end; text-align: right; }
-.temp-label { font-size: 12px; font-weight: 500; color: var(--mt-outline); }
-.temp-current { font: 600 24px/32px "Manrope", sans-serif; color: var(--mt-primary); letter-spacing: -0.01em; }
-.temp-target { font: 600 20px/28px "Manrope", sans-serif; color: var(--mt-on-surface); }
+.temp-label { font-size: 11px; font-weight: 500; color: var(--mt-outline); }
+.temp-current { font: 600 20px/28px "Manrope", sans-serif; color: var(--mt-primary); letter-spacing: -0.01em; }
+.temp-target { font: 600 16px/24px "Manrope", sans-serif; color: var(--mt-on-surface); }
 .temp-divider { width: 1px; height: 40px; background: var(--mt-outline-variant); opacity: 0.5; }
 
 /* Slider */
 .slider-section { display: flex; flex-direction: column; gap: 8px; padding: 0 8px; }
-.slider-labels { display: flex; justify-content: space-between; font-size: 12px; font-weight: 500; color: var(--mt-outline); }
+.slider-labels { display: flex; justify-content: space-between; font-size: 11px; font-weight: 500; color: var(--mt-outline); }
 input[type="range"] { width: 100%; height: 24px; margin: 0; appearance: none; background: transparent; cursor: pointer; }
 input[type="range"]::-webkit-slider-runnable-track { height: 8px; border-radius: 4px; background: linear-gradient(to right, var(--mt-primary) var(--progress, 100%), var(--mt-surface-dim) var(--progress, 100%)); }
-input[type="range"]::-webkit-slider-thumb { width: 24px; height: 24px; margin-top: -8px; appearance: none; border: 0; border-radius: 50%; background: var(--mt-primary); box-shadow: 0 2px 4px rgb(0 0 0 / 20%); }
+input[type="range"]::-webkit-slider-thumb { appearance: none; width: 16px; height: 16px; margin-top: -4px; border-radius: 50%; background: var(--mt-primary); box-shadow: 0 2px 4px rgb(0 0 0 / 20%); border: 0; cursor: pointer; }
 input[type="range"]::-moz-range-track { height: 8px; border-radius: 4px; background: var(--mt-surface-dim); }
 input[type="range"]::-moz-range-progress { height: 8px; border-radius: 4px; background: var(--mt-primary); }
-input[type="range"]::-moz-range-thumb { width: 24px; height: 24px; border: 0; border-radius: 50%; background: var(--mt-primary); box-shadow: 0 2px 4px rgb(0 0 0 / 20%); }
+input[type="range"]::-moz-range-thumb { appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--mt-primary); box-shadow: 0 2px 4px rgb(0 0 0 / 20%); border: 0; cursor: pointer; }
 
-.divider { width: 100%; height: 1px; background: rgba(0, 137, 123, 0.15); }
+.divider { width: 100%; height: 1px; background: var(--mt-border); }
 
 /* Modes Accordion */
 .modes-section { display: flex; flex-direction: column; }
@@ -147,7 +151,7 @@ input[type="range"]::-moz-range-thumb { width: 24px; height: 24px; border: 0; bo
   transition: background 0.2s;
 }
 .modes-toggle:hover { background: var(--mt-surface-container-low); padding: 8px; margin: 0 -8px; width: calc(100% + 16px); }
-.modes-toggle h3 { font: 600 14px/18px "Work Sans", sans-serif; margin: 0; }
+.modes-toggle h3 { font: 600 13px/18px "Work Sans", sans-serif; margin: 0; }
 .modes-toggle ha-icon { transition: transform 0.3s ease; }
 .modes-toggle.open ha-icon { transform: rotate(180deg); }
 .modes-content { overflow: hidden; max-height: 0; transition: max-height 0.3s ease-in-out; }
@@ -163,7 +167,7 @@ input[type="range"]::-moz-range-thumb { width: 24px; height: 24px; border: 0; bo
 .mode-btn:active { transform: scale(0.95); }
 .mode-btn.active { background: var(--mt-primary); color: var(--mt-on-primary); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 .mode-btn ha-icon { --mdc-icon-size: 20px; }
-.mode-btn span { font-size: 10px; font-weight: 500; line-height: 1.2; text-align: center; }
+.mode-btn span { font-size: 9px; font-weight: 500; line-height: 1.2; text-align: center; }
 
 /* Keep Warm */
 .warm-row { 
@@ -179,7 +183,7 @@ input[type="range"]::-moz-range-thumb { width: 24px; height: 24px; border: 0; bo
   background: var(--mt-surface-variant); color: var(--mt-on-surface-variant);
 }
 .warm-icon-box ha-icon { --mdc-icon-size: 16px; }
-.warm-label { font: 400 14px/20px "Work Sans", sans-serif; color: var(--mt-on-surface); }
+.warm-label { font: 400 13px/20px "Work Sans", sans-serif; color: var(--mt-on-surface); }
 .toggle { 
   width: 48px; height: 24px; padding: 4px; display: flex; align-items: center; 
   border-radius: 999px; background: var(--mt-surface-dim); transition: background .2s ease; 
@@ -281,6 +285,7 @@ class StitchMintTealKettleCard extends HTMLElement {
       keep_warm_name: config.keep_warm_name ?? DEFAULTS.keep_warm_name,
       power_on_mode: config.power_on_mode ?? 'on',
       power_off_mode: config.power_off_mode ?? 'off',
+      theme: config.theme || {}
     };
     this.render();
   }
@@ -383,6 +388,18 @@ class StitchMintTealKettleCard extends HTMLElement {
       return;
     }
     
+    // Подготовка CSS переменных из темы
+    const theme = this.config.theme || {};
+    let themeStyle = "";
+    if (theme.background) themeStyle += `--mt-surface: ${escapeHtml(theme.background)}; `;
+    if (theme.surface) themeStyle += `--mt-surface-container: ${escapeHtml(theme.surface)}; --mt-surface-variant: ${escapeHtml(theme.surface)}; --mt-surface-dim: ${escapeHtml(theme.surface)}; --mt-surface-container-high: ${escapeHtml(theme.surface)}; `;
+    if (theme.primary) themeStyle += `--mt-primary: ${escapeHtml(theme.primary)}; `;
+    if (theme.text) themeStyle += `--mt-on-surface: ${escapeHtml(theme.text)}; `;
+    if (theme.secondary) themeStyle += `--mt-on-surface-variant: ${escapeHtml(theme.secondary)}; --mt-outline: ${escapeHtml(theme.secondary)}; --mt-tertiary: ${escapeHtml(theme.secondary)}; `;
+    if (theme.on_primary) themeStyle += `--mt-on-primary: ${escapeHtml(theme.on_primary)}; `;
+    if (theme.border) themeStyle += `--mt-border: ${escapeHtml(theme.border)}; `;
+    if (theme.shadow) themeStyle += `--mt-shadow: ${escapeHtml(theme.shadow)}; `;
+    
     const attributes = state.attributes ?? {};
     const current = Number.isFinite(Number(attributes.current_temperature)) ? Number(attributes.current_temperature) : null;
     const target = Number.isFinite(Number(attributes.temperature)) ? Number(attributes.temperature) : null;
@@ -443,7 +460,7 @@ class StitchMintTealKettleCard extends HTMLElement {
 
     this.root.innerHTML = `
       <style>${STYLE}</style>
-      <article class="card">
+      <article class="card" style="${themeStyle}">
         <header class="header">
           <div class="icon-bubble">
             <ha-icon icon="${safeIcon(this.config.icon, DEFAULTS.icon)}"></ha-icon>
